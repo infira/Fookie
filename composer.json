@@ -1,10 +1,16 @@
 {
-    "name": "gentaliaru/fw",
-    "authors": [
-        {
-            "name": "gen.taliaru",
-            "email": "gen@infira.ee"
-        }
-    ],
-    "require": {}
+  "name"             : "infira/fw",
+  "authors"          : [
+	{
+	  "name" : "gen.taliaru",
+	  "email": "gen@infira.ee"
+	}
+  ],
+  "minimum-stability": "dev",
+  "require"          : {
+	"altorouter/altorouter": "v1.2.0",
+	"infira/errorhandler"  : "1.*",
+	"infira/utils"         : "1.*",
+	"infira/poesis"        : "dev-master"
+  }
 }
