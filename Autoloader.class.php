@@ -213,8 +213,20 @@ class Autoloader
 						$f = $dir . $nDir;
 						if (is_file($f))
 						{
-							$cn                                        = str_replace(['.class'], '', pathinfo($f)['filename']);
-							self::$namespaces[$namespace . '\\' . $cn] = $f;
+							$cn = str_replace(['.class'], '', pathinfo($f)['filename']);
+							$ns = $namespace . '\\' . $cn;
+							if ($ns{(strlen($ns) - 1)} == '\\')
+							{
+								$ns = substr($ns, 0, -1);
+							}
+							$pi = pathinfo($f);
+							if (isset($pi['extension']))
+							{
+								if ($pi['extension'] == 'php')
+								{
+									self::$namespaces[$ns] = $f;
+								}
+							}
 						}
 					}
 				}
