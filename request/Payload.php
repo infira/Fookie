@@ -1,5 +1,9 @@
 <?php
-require_once Path::facade('Http.class.php');
+
+namespace Infira\Fookie\request;
+
+use AppConfig;
+use Infira\Fookie\facade\Http;
 
 class Payload
 {

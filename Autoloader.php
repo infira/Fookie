@@ -38,8 +38,10 @@ class Autoloader
 			if (is_callable(self::$installPathsMethod))
 			{
 				$installPaths   = [];
-				$installPaths[] = ['ns:IFW', Path::infiraFW()];
-				$installPaths[] = ['ns:IFW\facade', Path::infiraFW('facade/')];
+				$installPaths[] = ['ns:Infira\Fookie', Path::infiraFW()];
+				$installPaths[] = ['ns:Infira\Fookie\facade', Path::infiraFW('facade/')];
+				$installPaths[] = ['ns:Infira\Fookie\request', Path::infiraFW('request/')];
+				$installPaths[] = ['ns:Infira\Fookie\controller', Path::infiraFW('controller/')];
 				$installPaths   = array_merge($installPaths, callback(self::$installPathsMethod));
 				foreach ($installPaths as $path)
 				{
@@ -214,6 +216,10 @@ class Autoloader
 						if (is_file($f))
 						{
 							$cn = str_replace(['.class'], '', pathinfo($f)['filename']);
+							if ($namespace == 'Infira\Fookie\controller')
+							{
+								$cn = str_replace('.controller', '', $cn);
+							}
 							$ns = $namespace . '\\' . $cn;
 							if ($ns{(strlen($ns) - 1)} == '\\')
 							{

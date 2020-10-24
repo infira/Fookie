@@ -1,6 +1,12 @@
 <?php
 
+namespace Infira\Fookie\controller;
+
 use Infira\Utils\ClassFarm;
+use Infira\Fookie\facade\Http;
+use Infira\Fookie\request\Route;
+use Infira\Fookie\facade\Session;
+use AppConfig;
 
 ClassFarm::add("Controller", "Controller");
 

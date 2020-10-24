@@ -1,8 +1,9 @@
 <?php
 
-class AltoRouterExtendor extends AltoRouter
+namespace Infira\Fookie\request;
+class AltoRouterExtendor extends \AltoRouter
 {
-	public $namedRoutesForLinking = FALSE;
+	public $namedRoutesForLinking = false;
 	
 	public function generate($routeName, array $params = [])
 	{

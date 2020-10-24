@@ -1,9 +1,13 @@
 <?php
 
-use Infira\Utils\Http as Http;
-use Infira\Utils\File as File;
+namespace Infira\Fookie\controller;
 
-class ControlPanelController extends Controller
+use Infira\Fookie\facade\Http;
+use Infira\Fookie\facade\File;
+use Infira\Fookie\request\Route;
+use Infira\Fookie\request\Payload;
+
+class ControlPanel extends \Infira\Fookie\controller\Controller
 {
 	public function __construct()
 	{

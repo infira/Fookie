@@ -1,9 +1,14 @@
 <?php
 
-use Infira\Poesis\DbQueryHistory;
-use Infira\Utils\ClassFarm;
+namespace Infira\Fookie;
 
-class InfiraFramework
+use Infira\Poesis\DbQueryHistory;
+use Infira\Fookie\facade\Session;
+use Infira\Fookie\request\Route;
+use Infira\Fookie\request\Payload;
+use Infira\Fookie\facade\Http;
+
+class Fookie
 {
 	/**
 	 * Displays the eRaama result

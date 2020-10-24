@@ -1,9 +1,6 @@
 <?php
 
-/**
- * A class to convert variables value to other types
- * @
- */
+namespace Infira\Fookie;
 abstract class PathHandler
 {
 	public static function init()

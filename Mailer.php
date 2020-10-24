@@ -1,8 +1,8 @@
 <?php
 
-namespace IFW;
+namespace Infira\Fookie;
 
-use Infira\Utils\Is;
+use Infira\Fookie\facade\Is;
 
 class Mailer extends \PHPMailer\PHPMailer\PHPMailer
 {

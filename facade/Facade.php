@@ -1,6 +1,6 @@
 <?php
 
-namespace IFW\facade;
+namespace Infira\Fookie\facade;
 
 use Infira\Utils\ClassFarm;
 

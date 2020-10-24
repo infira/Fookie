@@ -1,5 +1,6 @@
 <?php
 
+namespace Infira\Fookie\request;
 class RouteNode
 {
 	public $name;

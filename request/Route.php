@@ -1,5 +1,12 @@
 <?php
 
+namespace Infira\Fookie\request;
+
+use Infira\Fookie\facade\Http;
+use AppConfig;
+use Path;
+use Infira\Fookie\facade\Variable;
+
 class Route
 {
 	private $route;
@@ -35,8 +42,8 @@ class Route
 		self::$path                                                        = Path::fix(Http::getGET(self::$httpVarName, ""));
 		self::$Alto                                                        = new AltoRouterExtendor();
 		self::$Config                                                      = AppConfig::getRoutes();
-		self::$systemRoutes["__ALL_ROLES__"]["ControlPanelDashboard"]      = "GET => controlpanel => ControlPanelController#index";
-		self::$systemRoutes["__ALL_ROLES__"]["ControlPanelSubClass"]           = "GET => controlpanel/[:subClass] => ControlPanelController#subClass";
+		self::$systemRoutes["__ALL_ROLES__"]["ControlPanelDashboard"]      = "GET => controlpanel => Infira\Fookie\controller\ControlPanel#index";
+		self::$systemRoutes["__ALL_ROLES__"]["ControlPanelSubClass"]       = "GET => controlpanel/[:subClass] => Infira\Fookie\controller\ControlPanel#subClass";
 		self::$systemRoutes["__ALL_ROLES__"]["OperationControllerStarter"] = "GET => op/[:opName] => OperationController#handle";
 		foreach (self::$Config->matchTypes as $name => $expression)
 		{
@@ -171,7 +178,7 @@ class Route
 				Http::setGET($key, $val);
 			}
 			
-			$match->extra = new stdClass();
+			$match->extra = new \stdClass();
 			if (isset(self::$Config->matchParsers[$match->name]))
 			{
 				self::$Config->matchParsers[$match->name]($match);
@@ -247,7 +254,7 @@ class Route
 		addExtraErrorInfo("currentControllerName", $controllerName);
 		if (self::in('ControlPanelDashboard,ControlPanelSubClass'))
 		{
-			require_once Path::infiraFW('controller/ControlPanelController.class.php');
+			require_once Path::infiraFW('controller/ControlPanel.controller.php');
 		}
 		$Controller = new $controllerName();
 		$Controller->validate();
