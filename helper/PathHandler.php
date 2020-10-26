@@ -128,6 +128,16 @@ abstract class PathHandler
 		return $path;
 	}
 	
+	
+	abstract public static function config(string $file = "", bool $getAsUrl = false);
+	
+	abstract public static function modelModels(string $file = "", bool $getAsUrl = false);
+	
+	abstract public static function modelExtensions(string $file = "", bool $getAsUrl = false);
+	
+	abstract public static function dbViews(string $file = "", bool $getAsUrl = false);
+	
+	abstract public static function systemUpdates(string $file = "", bool $getAsUrl = false);
 }
 
 ?>

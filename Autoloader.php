@@ -38,10 +38,10 @@ class Autoloader
 			if (is_callable(self::$installPathsMethod))
 			{
 				$installPaths   = [];
-				$installPaths[] = ['ns:Infira\Fookie', Path::infiraFW()];
-				$installPaths[] = ['ns:Infira\Fookie\facade', Path::infiraFW('facade/')];
-				$installPaths[] = ['ns:Infira\Fookie\request', Path::infiraFW('request/')];
-				$installPaths[] = ['ns:Infira\Fookie\controller', Path::infiraFW('controller/')];
+				$installPaths[] = ['ns:Infira\Fookie', Path::fookie()];
+				$installPaths[] = ['ns:Infira\Fookie\facade', Path::fookie('facade/')];
+				$installPaths[] = ['ns:Infira\Fookie\request', Path::fookie('request/')];
+				$installPaths[] = ['ns:Infira\Fookie\controller', Path::fookie('controller/')];
 				$installPaths   = array_merge($installPaths, callback(self::$installPathsMethod));
 				foreach ($installPaths as $path)
 				{
@@ -59,37 +59,61 @@ class Autoloader
 			
 			$phpAutoloadFileStr = '<?php' . "\n";
 			
-			$debugOutput = [];
+			$setted = [];
 			foreach (self::$includePaths as $path)
 			{
 				foreach (glob($path . "*.php") as $file)
 				{
-					$nasename               = basename($file);
-					$debugOutput[$nasename] = str_replace(Path::root(), '', $file);
-					$source                 = file_get_contents($file);
-					$matches                = [];
+					$nasename                   = basename($file);
+					$setted['files'][$nasename] = str_replace(Path::root(), '', $file);
+					$source                     = file_get_contents($file);
+					$matches                    = [];
 					
 					if (strpos($nasename, '.class') !== false)
 					{
-						$class              = str_replace('.class.php', '', $nasename);
-						$phpAutoloadFileStr .= 'self::$classes[\'' . $class . '\'] = \'' . $file . '\';' . "\n";
+						$class = str_replace('.class.php', '', $nasename);
+						if (isset($setted['classes'][$class]))
+						{
+							cleanOutput(true);
+							echo 'Cant define autoloader class(' . $class . ') twice = ' . $file . BR;
+							echo 'Previousliy declared: ' . $setted['classes'][$class];
+							exit;
+						}
+						$phpAutoloadFileStr        .= 'self::$classes[\'' . $class . '\'] = \'' . $file . '\';' . "\n";
+						$setted['classes'][$class] = $file;
 					}
 					elseif (strpos($nasename, '.int') !== false)
 					{
-						$class              = str_replace('.int.php', '', $nasename);
-						$phpAutoloadFileStr .= 'self::$interfaces[\'' . $class . '\'] = \'' . $file . '\';' . "\n";
+						$interface = str_replace('.int.php', '', $nasename);
+						if (isset($setted['interfaces'][$interface]))
+						{
+							cleanOutput(true);
+							echo 'Cant define autoloader interface(' . $interface . ') twice = ' . $file . BR;
+							echo 'Previousliy declared: ' . $setted['interfaces'][$interface];
+							exit;
+						}
+						$phpAutoloadFileStr               .= 'self::$interfaces[\'' . $interface . '\'] = \'' . $file . '\';' . "\n";
+						$setted['interfaces'][$interface] = $interface;
 					}
 					elseif (strpos($nasename, '.trait') !== false)
 					{
-						$class              = str_replace('.trait.php', '', $nasename);
-						$phpAutoloadFileStr .= 'self::$traits[\'' . $class . '\'] = \'' . $file . '\';' . "\n";
+						$trait = str_replace('.trait.php', '', $nasename);
+						if (isset($setted['traits'][$trait]))
+						{
+							cleanOutput(true);
+							echo 'Cant define autoloader trait(' . $trait . ') twice = ' . $file . BR;
+							echo 'Previousliy declared: ' . $setted['traits'][$trait];
+							exit;
+						}
+						$phpAutoloadFileStr       .= 'self::$traits[\'' . $trait . '\'] = \'' . $file . '\';' . "\n";
+						$setted['traits'][$trait] = $file;
 					}
 				}
 			}
 			foreach (self::$namespaces as $nsClass => $path)
 			{
-				$debugOutput[$nsClass] = $path;
-				$phpAutoloadFileStr    .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
+				$setted['namespaces'][$nsClass] = $path;
+				$phpAutoloadFileStr             .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
 			}
 			$phpAutoloadFileStr .= "\n" . '?>';
 			file_put_contents(self::$autoloadPhpFilePath, trim($phpAutoloadFileStr));
@@ -98,7 +122,7 @@ class Autoloader
 				if (!isset($_GET["minOutput"]))
 				{
 					echo "<pre>";
-					print_r($debugOutput);
+					print_r($setted);
 					echo "<pre>";
 					exit("ok");
 				}
@@ -216,10 +240,7 @@ class Autoloader
 						if (is_file($f))
 						{
 							$cn = str_replace(['.class'], '', pathinfo($f)['filename']);
-							if ($namespace == 'Infira\Fookie\controller')
-							{
-								$cn = str_replace('.controller', '', $cn);
-							}
+							$cn = str_replace('.controller', '', $cn);
 							$ns = $namespace . '\\' . $cn;
 							if ($ns{(strlen($ns) - 1)} == '\\')
 							{

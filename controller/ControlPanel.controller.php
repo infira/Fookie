@@ -37,14 +37,22 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 	
 	public function subClass()
 	{
-		$className = Http::getGET('subClass');
-		if ($className == 'db')
+		$controller = Http::getGET('subClass');
+		if ($controller == 'updates')
 		{
-			$className = 'InstallDatabase';
+			$className = '\Infira\Fookie\controller\SystemUpdater';
+		}
+		elseif ($controller == 'db')
+		{
+			$className = '\Infira\Fookie\controller\DbInstaller';
+		}
+		else
+		{
+			exit("Unknown controller");
 		}
 		$Db = new $className();
 		
-		return $Db->start();
+		return $Db->run();
 	}
 	
 	public function isMinOutout()
@@ -116,10 +124,11 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		
 		
 		$db = DB_NAME;
-		$r  .= "<h4>Database: $db</h4>";
-		$r  .= $this->getButton("System updates", "db", ['task' => "updates", "reset" => 0]);
-		$r  .= $this->getButton("Reset System updates", "db", ['task' => "updates", "reset" => 1]);
+		$r  .= "<h4>Update</h4>";
+		$r  .= $this->getButton("Install updates", "updates", ["reset" => 0]);
+		$r  .= $this->getButton("Reset System updates", "updates", ["reset" => 1]);
 		$r  .= " | ";
+		$r  .= "<h4>Database: $db</h4>";
 		$r  .= $this->getButton("Views", 'db', ['task' => "views"]);
 		$r  .= $this->getButton("Database ORM models", 'db', ['task' => "ormModels"]);
 		$r  .= " | ";
@@ -145,7 +154,7 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		echo $r . BR . BR . BR;
 	}
 	
-	private function getButton($label, $subClass, $urlParams = [])
+	private function getButton($label, $controllerName, $urlParams = [])
 	{
 		$style = "";
 		$ok    = true;
@@ -157,11 +166,15 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 				break;
 			}
 		}
+		if ($controllerName != Http::getGET('subClass'))
+		{
+			$ok = false;
+		}
 		if ($ok)
 		{
 			$style = 'style="color:red;font-weight:bold"';
 		}
-		$link = Route::getLink('/controlpanel/' . $subClass, $urlParams);
+		$link = Route::getLink('/controlpanel/' . $controllerName, $urlParams);
 		
 		return '<button ' . $style . ' type="button" onclick="window.location=\'' . $link . '\'">' . $label . '</button> ';
 	}

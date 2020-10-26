@@ -254,7 +254,7 @@ class Route
 		addExtraErrorInfo("currentControllerName", $controllerName);
 		if (self::in('ControlPanelDashboard,ControlPanelSubClass'))
 		{
-			require_once Path::infiraFW('controller/ControlPanel.controller.php');
+			require_once Path::fookie('controller/ControlPanel.controller.php');
 		}
 		$Controller = new $controllerName();
 		$Controller->validate();

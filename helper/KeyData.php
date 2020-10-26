@@ -1,5 +1,6 @@
 <?php
 
+namespace Infira\Fookie\helper;
 class KeyData
 {
 	public static function get($name)

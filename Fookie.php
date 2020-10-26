@@ -7,6 +7,7 @@ use Infira\Fookie\facade\Session;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\request\Payload;
 use Infira\Fookie\facade\Http;
+use Infira\Fookie\facade\Cache;
 
 class Fookie
 {
@@ -17,6 +18,7 @@ class Fookie
 	 */
 	public static function boot()
 	{
+		Cache::init();
 		Session::init();
 		Route::init();
 		Payload::init();
