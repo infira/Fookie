@@ -8,6 +8,8 @@ use Infira\Fookie\request\Route;
 use Infira\Fookie\request\Payload;
 use Infira\Fookie\facade\Http;
 use Infira\Fookie\facade\Cache;
+use Infira\Poesis\Poesis;
+use Autoloader;
 
 class Fookie
 {
@@ -18,6 +20,15 @@ class Fookie
 	 */
 	public static function boot()
 	{
+		Autoloader::voidOnNotExists('PoesisDataGettersExtendor');
+		Autoloader::voidOnNotExists('PoesisDataGettersExtendor2');
+		Autoloader::voidOnNotExists('PoesisConnectionExtendor');
+		Autoloader::voidOnNotExists('PoesisModelExtendor');
+		Autoloader::init();
+		
+		\AppConfig::finalize();
+		Poesis::init();
+		Poesis::setDefaultConnection(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 		Cache::init();
 		Session::init();
 		Route::init();

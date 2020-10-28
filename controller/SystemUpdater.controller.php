@@ -98,7 +98,8 @@ class SystemUpdater extends Controller
 						
 						$Db->sqlQuery          = $sql;
 						$Db->phpScriptFileName = $fileName;
-						$Db->phpScript         = File::getContent($scriptFile);
+						addExtraErrorInfo('$scriptFile', $scriptFile);
+						$Db->phpScript = File::getContent($scriptFile);
 					}
 					else
 					{

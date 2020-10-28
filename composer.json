@@ -11,6 +11,7 @@
 	"altorouter/altorouter": "v1.2.0",
 	"infira/errorhandler"  : "1.*",
 	"infira/utils"         : "1.*",
-	"infira/poesis"        : "dev-master"
+	"infira/poesis"        : "dev-master",
+	"infira/farray"        : "dev-master"
   }
 }

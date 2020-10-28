@@ -44,7 +44,14 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		}
 		elseif ($controller == 'db')
 		{
-			$className = '\Infira\Fookie\controller\DbInstaller';
+			if (class_exists('DbInstaller', true))
+			{
+				$className = '\DbInstaller';
+			}
+			else
+			{
+				$className = '\Infira\Fookie\controller\DbInstaller';
+			}
 		}
 		else
 		{

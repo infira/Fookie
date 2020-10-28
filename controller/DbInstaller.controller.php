@@ -12,6 +12,16 @@ use Infira\Utils\File;
 
 class DbInstaller extends Controller
 {
+	private $dbFiles     = ['views' => [], 'triggers' => []];
+	private $voidDbFiles = ['views' => [], 'triggers' => []];
+	
+	public function __construct()
+	{
+		$this->dbFiles['views'][]    = Path::dbViews();
+		$this->dbFiles['triggers'][] = Path::dbTriggers();
+		parent::__construct();
+	}
+	
 	public function run()
 	{
 		if (!defined("VOID_DB_LOG"))
@@ -62,29 +72,25 @@ class DbInstaller extends Controller
 		
 	}
 	
-	private function getSqlViews($dir)
+	public function addViewFile(string $view)
 	{
-		$output   = [];
-		$getViews = Dir::getContents($dir, "dummy.txt");
-		if (checkArray($getViews))
-		{
-			foreach ($getViews as $v)
-			{
-				$v = Fix::dirPath($dir) . $v;
-				if ($v != "." && $v != ".." && is_file($v))
-				{
-					if (!in_array($v, $output))
-					{
-						if (strtolower(File::getExtension($v)) == 'sql')
-						{
-							$output[] = $v;
-						}
-					}
-				}
-			}
-		}
-		
-		return $output;
+		$this->dbFiles['views'][] = $view;
+	}
+	
+	public function voidView(string $view)
+	{
+		$this->voidDbFiles['views'][] = $view;
+	}
+	
+	public function addTriggerFile(string $view)
+	{
+		$this->dbFiles['tiggers'][] = $view;
+	}
+	
+	
+	public function voidTrigger(string $view)
+	{
+		$this->voidDbFiles['tiggers'][] = $view;
 	}
 	
 	/*
@@ -92,28 +98,13 @@ class DbInstaller extends Controller
 	 */
 	public function views()
 	{
-		$allViews = $this->getSqlViews(Path::dbViews());
-		
-		$voidViews = ["install", "updates"];
-		if (Http::existsGET("void"))
-		{
-			$voidViews = array_merge($voidViews, Variable::toArray(Http::getGet("void")));
-		}
-		if (Http::existsGET("view"))
-		{
-			$allViews = preg_grep('/' . Http::getGet("view") . '/', $allViews);
-		}
 		$output = ["Installing views"];
-		foreach ($allViews as $fn)
+		foreach ($this->getFiles($this->dbFiles['views']) as $fn)
 		{
-			$base = trim(str_replace(".sql", "", basename($fn)));
-			if (!in_array($base, $voidViews))
+			if (!in_array($fn, $this->voidDbFiles['views']))
 			{
-				if (substr($base, 0, 2) != "f_")
-				{
-					Db::fileQuery($fn);
-					$output [] = $fn;
-				}
+				Db::fileQuery($fn);
+				$output [] = $fn;
 			}
 		}
 		
@@ -124,37 +115,54 @@ class DbInstaller extends Controller
 	
 	public function triggers()
 	{
-		$outut         = ["Installing triggers"];
+		$output        = ["Installing triggers"];
 		$viewFolders   = [];
 		$viewFolders[] = Path::root("db/triggers/");
 		
-		$allTriggers = [];
-		foreach ($viewFolders as $folder)
+		foreach ($this->getFiles($this->dbFiles['triggers']) as $fn)
 		{
-			$allTriggers = array_merge($allTriggers, $this->getSqlViews($folder));
-		}
-		$voidTriggers = [];
-		if (Http::existsGET("void"))
-		{
-			$voidTriggers = array_merge($voidTriggers, Variable::toArray(Http::getGet("void")));
-		}
-		
-		foreach ($allTriggers as $fn)
-		{
-			$triggerName = trim(str_replace(".sql", "", basename($fn)));
-			if (!in_array($triggerName, $voidTriggers))
+			if (!in_array($fn, $this->voidDbFiles['triggers']))
 			{
 				$con     = File::getContent($fn);
-				$outut[] = $fn;
 				$queries = explode("[TSP]", $con);
 				foreach ($queries as $q)
 				{
 					Db::realQuery($q);
+					$output[] = $fn;
 				}
 			}
 		}
 		
-		return $outut;
+		return $output;
+	}
+	
+	
+	private function getFiles(array $files)
+	{
+		$views = [];
+		foreach ($files as $file)
+		{
+			if (is_dir($file))
+			{
+				$views = array_merge($views, Dir::getContents($file, "dummy.txt", false, true));
+			}
+			elseif (is_file($file))
+			{
+				if (!in_array($file, $views))
+				{
+					if (strtolower(File::getExtension($file)) == 'sql')
+					{
+						$views[] = $file;
+					}
+				}
+			}
+			else
+			{
+				alert('View file(' . $file . ') not found');
+			}
+		}
+		
+		return $views;
 	}
 }
 

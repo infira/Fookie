@@ -17,7 +17,7 @@ class Autoloader
 	public static function init()
 	{
 		self::$autoloadPhpFilePath = Path::temp('autoloadClasslocations.php');
-		$path                      = pathinfo(self::$autoloadPhpFilePath, PATHINFO_DIRNAME);
+		$path = pathinfo(self::$autoloadPhpFilePath, PATHINFO_DIRNAME);
 		if (!is_dir($path))
 		{
 			exit("TEMP path for installing autoloader not existing");
