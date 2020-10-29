@@ -2,16 +2,18 @@
   "name"             : "infira/fookie",
   "authors"          : [
 	{
-	  "name" : "gen.taliaru",
+	  "name" : "Gen Taliaru",
 	  "email": "gen@infira.ee"
 	}
   ],
   "minimum-stability": "dev",
+  "prefer-stable"    : true,
   "require"          : {
 	"altorouter/altorouter": "v1.2.0",
 	"infira/errorhandler"  : "1.*",
 	"infira/utils"         : "1.*",
 	"infira/poesis"        : "dev-master",
+	"infira/cachly"        : "dev-master",
 	"infira/farray"        : "dev-master"
   }
 }
