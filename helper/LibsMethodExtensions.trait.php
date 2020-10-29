@@ -23,13 +23,13 @@ trait LibsMethodExtensions
 			
 			return true;
 		};
-		if (Is::isClass($config, "ArrayObjectProps"))
+		if (Is::isClass($config, "\Infira\Farray\FarrayObject"))
 		{
 			$Params = $config;
 		}
 		else
 		{
-			$Params = new ArrayObjectProps();
+			$Params = new \Infira\Farray\FarrayObject();
 		}
 		if (is_string($config))
 		{

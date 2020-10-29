@@ -8,6 +8,14 @@
   ],
   "minimum-stability": "dev",
   "prefer-stable"    : true,
+  "autoload"         : {
+	"files": ["src/init.php"],
+	"psr-4": {
+	  "Infira\\Farray\\extendors\\": "src/extendors",
+	  "Infira\\Farray\\plugins\\"  : "src/plugins",
+	  "Infira\\Farray\\"           : "src/"
+	}
+  },
   "require"          : {
 	"altorouter/altorouter": "v1.2.0",
 	"infira/errorhandler"  : "1.*",

@@ -5,7 +5,8 @@ namespace Infira\Fookie\controller;
 use Http;
 use Path;
 use Db;
-use Infira\Poesis\generator\ModelGenerator;
+use Infira\Poesis\modelGenerator\Generator;
+use Infira\Poesis\modelGenerator\Options;
 use Infira\Utils\Dir;
 use Infira\Utils\Fix;
 use Infira\Utils\File;
@@ -42,7 +43,7 @@ class DbInstaller extends Controller
 	
 	public function ormModels()
 	{
-		$gen = new ModelGenerator(Path::modelModels(), \Infira\Poesis\ConnectionManager::default());
+		$gen = new Generator(Path::modelModels(), \Infira\Poesis\ConnectionManager::default(), new Options());
 		
 		return $gen->generate();
 	}

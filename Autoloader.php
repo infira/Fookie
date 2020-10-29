@@ -17,7 +17,7 @@ class Autoloader
 	public static function init()
 	{
 		self::$autoloadPhpFilePath = Path::temp('autoloadClasslocations.php');
-		$path = pathinfo(self::$autoloadPhpFilePath, PATHINFO_DIRNAME);
+		$path                      = pathinfo(self::$autoloadPhpFilePath, PATHINFO_DIRNAME);
 		if (!is_dir($path))
 		{
 			exit("TEMP path for installing autoloader not existing");
@@ -47,10 +47,20 @@ class Autoloader
 				{
 					if (substr($path[0], 0, 3) == 'ns:')
 					{
-						self::addNamespace($path[1], substr($path[0], 3));
+						$dir = $path[1];
+						if (!is_dir($dir))
+						{
+							exit($dir . ' is not a dir');
+						}
+						self::addNamespace($dir, substr($path[0], 3));
 					}
 					else
 					{
+						$dir = $path[0];
+						if (!is_dir($dir))
+						{
+							exit($dir . ' is not a dir');
+						}
 						self::addIncludePath($path[0], $path[1]);
 					}
 				}

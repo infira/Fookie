@@ -94,8 +94,8 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 	
 	public function flushCompiledTemplates()
 	{
-		$this->Tmpl->clearAllCache();
-		$this->Tmpl->clearCompiledTemplate();
+		$this->View->clearAllCache();
+		$this->View->clearCompiledTemplate();
 		
 		return "templates flushed";
 	}

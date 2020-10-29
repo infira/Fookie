@@ -87,44 +87,15 @@ trait PoesisDataGettersExtendor
 		return $this->options($key, $v, $firstNull, true, $extraFields);
 	}
 	
-	public function eachSmarty($_smarty_tpl, $smartyFunctionToCall, $convertRowToArrayListNode = false)
-	{
-		$key    = 0;
-		$res    = $this->getRes();
-		$output = "";
-		while ($row = $res->fetch_object())
-		{
-			$pRow = $this->rowParser($row, [$key, $row]);//parsed Row
-			if ($pRow !== SKIP_)
-			{
-				$key++;
-				if ($pRow === BREAK_)
-				{
-					break;
-				}
-				if ($pRow === CONTINUE_)
-				{
-					continue;
-				}
-			}
-			if ($convertRowToArrayListNode)
-			{
-				$pRow = new ArrayListNode($pRow);
-			}
-			$output .= $_smarty_tpl->ext->_tplFunction->callTemplateFunction($_smarty_tpl, $smartyFunctionToCall, ["Row" => $pRow], true);
-		}
-		
-		return $output;
-	}
-	
-	
 	/**
-	 * Get data as ArrayList
+	 * Get data as FarrayList
+	 * old = getArrayList
 	 *
 	 * @param string $IDField
-	 * @return ArrayList
+	 * @param string $arrayListClassName
+	 * @return \Infira\Farray\FarrayList
 	 */
-	public function getArrayList($IDField = "ID", $arrayListClassName = "ArrayList")
+	public function getFarrayList($IDField = "ID", $arrayListClassName = "\Infira\Farray\FarrayList")
 	{
 		$List = new $arrayListClassName($this->getRes()->fetch_all(MYSQLI_ASSOC));
 		$List->setIDField($IDField);
@@ -139,22 +110,23 @@ trait PoesisDataGettersExtendor
 	
 	/**
 	 * Get data as ArrayListNode
+	 * old = getArrayListNode
 	 *
-	 * @return ArrayListNode
+	 * @return \Infira\Farray\FarrayNode
 	 */
-	public function getArrayListNode()
+	public function getFarrayNode()
 	{
-		return $this->getRowAsClass("ArrayListNode");
+		return $this->getRowAsClass("\Infira\Farray\FarrayNode");
 	}
 	
 	/**
 	 * Get data as ArraylList, each row will be stdClass
 	 *
-	 * @return ArrayCallback
+	 * @return \Infira\Farray\Callback
 	 */
-	public function getArrayCallback()
+	public function getFarrayCallback()
 	{
-		$List = $this->getAllAsClass("ArrayCallback");
+		$List = $this->getAllAsClass("\Infira\Farray\Callback");
 		if ($this->rowParserCallback)
 		{
 			$List->setCallback($this->rowParserCallback, ($this->rowParserArguments ? $this->rowParserArguments : []), $this->rowParserScope);
@@ -164,13 +136,13 @@ trait PoesisDataGettersExtendor
 	}
 	
 	/**
-	 * Get Data as ArrayObjectProps
+	 * Get Data as \Infira\Farray\FarrayObject
 	 *
-	 * @return ArrayObjectProps
+	 * @return \Infira\Farray\FarrayObject
 	 */
-	public function getArrayObjectProps()
+	public function getFarrayObject()
 	{
-		return $this->getRowAsClass("ArrayObjectProps");
+		return $this->getRowAsClass("\Infira\Farray\FarrayObject");
 	}
 }
 
