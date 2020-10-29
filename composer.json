@@ -14,6 +14,6 @@
 	"infira/utils"         : "1.*",
 	"infira/poesis"        : "dev-master",
 	"infira/cachly"        : "dev-master",
-	"infira/farray"        : "*"
+	"infira/farray"        : "dev-main"
   }
 }
