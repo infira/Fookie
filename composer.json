@@ -9,11 +9,13 @@
   "minimum-stability": "dev",
   "prefer-stable"    : true,
   "autoload"         : {
-	"files": ["src/init.php"],
 	"psr-4": {
-	  "Infira\\Farray\\extendors\\": "src/extendors",
-	  "Infira\\Farray\\plugins\\"  : "src/plugins",
-	  "Infira\\Farray\\"           : "src/"
+	  "Infira\\Fookie\\config\\"    : "src/config",
+	  "Infira\\Fookie\\controller\\": "src/controller",
+	  "Infira\\Fookie\\facade\\"    : "src/facade",
+	  "Infira\\Fookie\\helper\\"    : "src/helper",
+	  "Infira\\Fookie\\request\\"   : "src/request",
+	  "Infira\\Fookie\\"            : "src/"
 	}
   },
   "require"          : {
