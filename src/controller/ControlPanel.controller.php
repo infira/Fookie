@@ -6,18 +6,18 @@ use Infira\Fookie\facade\Http;
 use Infira\Fookie\facade\File;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\request\Payload;
+use Infira\Fookie\Fookie;
 
 class ControlPanel extends \Infira\Fookie\controller\Controller
 {
 	public function __construct()
 	{
 		$this->allowOnlyDevAccess();
-		$this->allowUnAuthorisedAccess();
 		parent::__construct();
 		Prof()->void();
 		$this->showBeforeInstall();
 		ini_set('memory_limit', '400M');
-		Payload::outputHTML();
+		Payload::plainOutput();
 	}
 	
 	public function index()
@@ -44,14 +44,11 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		}
 		elseif ($controller == 'db')
 		{
-			if (class_exists('DbInstaller', true))
-			{
-				$className = '\DbInstaller';
-			}
-			else
-			{
-				$className = '\Infira\Fookie\controller\DbInstaller';
-			}
+			$className = Fookie::optExists('dbInstallerController') ? Fookie::opt('dbInstallerController') : '\Infira\Fookie\controller\DbInstaller';
+		}
+		elseif ($controller == 'flusher')
+		{
+			$className = Fookie::optExists('cacheFlusherController') ? Fookie::opt('cacheFlusherController') : '\Infira\Fookie\controller\CacheFlusher';
 		}
 		else
 		{
@@ -73,38 +70,6 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		KeyData::set("assetsVersion", $assetsVersion);
 		
 		return $assetsVersion . BR;
-	}
-	
-	public function flushAll()
-	{
-		$output = '';
-		$output .= $this->flushCache() . BR;
-		$output .= $this->flushCompiledTemplates() . BR;
-		
-		return $output . "all flushed";
-	}
-	
-	public function flushCache()
-	{
-		alert("cache flusing is not implemented");
-		$this->flushCompiledTemplates();
-		
-		return "cache flushed";
-	}
-	
-	public function flushCompiledTemplates()
-	{
-		$this->View->clearAllCache();
-		$this->View->clearCompiledTemplate();
-		
-		return "templates flushed";
-	}
-	
-	public function flushEmailErrorCounter()
-	{
-		Dir::flush(Path::temp("emailErrorSentCount/"));
-		
-		return "emailErrorSentCount flushed";
 	}
 	
 	//------------
@@ -148,14 +113,14 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		
 		$r .= BR . BR;
 		
-		$r .= $this->getButton("flushAll", '', ['task' => "flushAll"]);
+		$r .= $this->getButton("flushAll", 'flusher', ['task' => "flushAll"]);
 		$r .= " | ";
 		
-		$r .= $this->getButton("flushAssets", '', ['task' => "flushAssets"]);
+		$r .= $this->getButton("flushAssets", 'flusher', ['task' => "flushAssets"]);
 		
-		$r .= $this->getButton("flushCache", '', ['task' => "flushCache"]);
-		$r .= $this->getButton("flushCompiledTemplates", '', ['task' => "flushCompiledTemplates"]);
-		$r .= $this->getButton("flush email erroir counter", '', ['task' => "flushEmailErrorCounter"]);
+		$r .= $this->getButton("flushCache", 'flusher', ['task' => "flushCache"]);
+		$r .= $this->getButton("flushCompiledTemplates", 'flusher', ['task' => "flushCompiledTemplates"]);
+		$r .= $this->getButton("flush email erroir counter", 'flusher', ['task' => "flushEmailErrorCounter"]);
 		
 		
 		echo $r . BR . BR . BR;

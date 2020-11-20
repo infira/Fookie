@@ -1,7 +1,9 @@
 <?php
 
-trait PoesisDataGettersExtendor
+trait PoesisDataMethodsExtendor
 {
+	use \PoesisDataMethodsExtendor2;
+	
 	/**
 	 * Get options for html <select tag
 	 *

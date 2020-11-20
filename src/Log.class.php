@@ -26,10 +26,14 @@ class Log
 		}
 		$Db->userID       = $userID;
 		$Db->isSerialized = 0;
-		if (is_array($content) or is_object($content))
+		if (isSerializable($content))
 		{
 			$Db->isSerialized = 1;
 			$content          = serialize($content);
+		}
+		else
+		{
+			alert("Cant serialize");
 		}
 		$Db->content    = "a";
 		$Db->insertDate = Date::nowSqlDateTime();

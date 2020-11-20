@@ -6,10 +6,13 @@ use Infira\Fookie\facade\Http;
 use AppConfig;
 use Path;
 use Infira\Fookie\facade\Variable;
+use \Infira\Fookie\facade\Session;
+use Infira\Fookie\Fookie;
 
 class Route
 {
-	private $route;
+	private        $route;
+	private static $routes = [];
 	
 	/**
 	 * @var AltoRouterExtendor
@@ -20,45 +23,40 @@ class Route
 	 * @var RouteNode
 	 */
 	private static $RouteNode;
-	
 	private static $defaultRole;
 	private static $role;
-	private static $roles;
-	
-	private static $httpVarName = "route";
-	
+	private static $httpVarName       = "route";
 	private static $path;
-	
 	private static $blockedHTTPOrigin = [];
-	private static $Config            = [];
-	private static $systemRoutes      = [];
 	
 	public static function init()
 	{
-		self::$httpVarName                                                 = AppConfig::routeGETParameter();
-		self::$defaultRole                                                 = AppConfig::routeDefaultRole();
-		self::$role                                                        = AppConfig::routeCurrent();
-		self::$roles                                                       = AppConfig::routeRoles() ? AppConfig::routeRoles() : [];
-		self::$path                                                        = Path::fix(Http::getGET(self::$httpVarName, ""));
-		self::$Alto                                                        = new AltoRouterExtendor();
-		self::$Config                                                      = AppConfig::getRoutes();
-		self::$systemRoutes["__ALL_ROLES__"]["ControlPanelDashboard"]      = "GET => controlpanel => Infira\Fookie\controller\ControlPanel#index";
-		self::$systemRoutes["__ALL_ROLES__"]["ControlPanelSubClass"]       = "GET => controlpanel/[:subClass] => Infira\Fookie\controller\ControlPanel#subClass";
-		self::$systemRoutes["__ALL_ROLES__"]["OperationControllerStarter"] = "GET => op/[:opName] => OperationController#handle";
-		foreach (self::$Config->matchTypes as $name => $expression)
-		{
-			self::addMatchTypes($name, $expression);
-		}
+		self::$httpVarName = AppConfig::routeGETParameter();
+		self::$defaultRole = AppConfig::routeDefaultRole();
+		self::$role        = AppConfig::routeCurrent();
+		self::$path        = Path::fix(Http::getGET(self::$httpVarName, ""));
+		self::$Alto        = new AltoRouterExtendor();
+		self::map('system', 'ControlPanelDashboard', 'GET', 'controlpanel', '\Infira\Fookie\controller\ControlPanel#index');
+		self::map('system', 'ControlPanelSubClass', 'GET', 'controlpanel/[:subClass]', '\Infira\Fookie\controller\ControlPanel#subClass');
+		
+		$operationController = Fookie::optExists('operationController') ? Fookie::opt('operationController') : '\Infira\Fookie\controller\Operation';
+		self::map('system', 'OperationController', 'GET', 'op/[:opName]', "$operationController#handle");
 		self::blockHTTPOrigin("chrome-extension://aegnopegbbhjeeiganiajffnalhlkkjb"); //it causes lots of _post requests to server it is that plugin https://chrome.google.com/webstore/detail/browser-safety/aegnopegbbhjeeiganiajffnalhlkkjb
 	}
 	
-	public static function addMatchTypes($name, $expression)
+	public static function getRequestUrl()
 	{
-		if (!is_string($expression))
+		$url = trim(Http::getGET(self::$httpVarName));
+		$len = strlen($url);
+		if ($len > 0)
 		{
-			alert("Expression must be string");
+			if ($url{$len - 1} == "/")
+			{
+				$url = substr($url, 0, -1);
+			}
 		}
-		self::$Alto->addMatchTypes([$name => $expression]);
+		
+		return $url;
 	}
 	
 	public static function handle()
@@ -74,16 +72,6 @@ class Route
 		{
 			Http::setGET(self::$httpVarName, "");
 		}
-		$requestUrlRoute = trim(Http::getGET(self::$httpVarName));
-		$len             = strlen($requestUrlRoute);
-		if ($len > 0)
-		{
-			if ($requestUrlRoute{$len - 1} == "/")
-			{
-				$requestUrlRoute = substr($requestUrlRoute, 0, -1);
-			}
-		}
-		
 		if (isset($_SERVER["HTTP_ORIGIN"]))
 		{
 			if (isset(self::$blockedHTTPOrigin[$_SERVER["HTTP_ORIGIN"]]))
@@ -92,62 +80,46 @@ class Route
 			}
 		}
 		
-		
-		if (!checkArray(self::$Config->routes))
-		{
-			alert("routes should not be empty");
-		}
 		addExtraErrorInfo("currentRole", self::$role);
 		$addRoutes = function ($routes, $roleName)
 		{
-			foreach ($routes as $routeName => $val)
+			foreach ($routes as $role => $Route)
 			{
-				$ex     = explode("=>", $val);
-				$method = trim($ex[0]);
-				$path   = trim($ex[1]);
-				$target = explode("#", trim($ex[2]));
-				
-				if (substr($path, 0, 5) == "ajax/")
+				$target       = new \stdClass();
+				$target->role = $roleName;
+				if (is_string($Route->controller))
 				{
-					$routeName = "$roleName.ajax.$routeName";
+					$ex                 = explode("#", $Route->controller);
+					$target->controller = $ex[0];
+					$target->method     = $ex[1];
 				}
 				else
 				{
-					$routeName = "$roleName.$routeName";
+					$target->controller = $Route->controller;
+					$target->method     = null;
 				}
-				self::$Alto->map($method, $path, ['controller' => $target[0], 'action' => (isset($target[1])) ? $target[1] : "", "roleName" => $roleName], $routeName);
+				self::$Alto->map($Route->method, $Route->path, $target, "$roleName.$role");
 			}
 		};
-		foreach (self::$systemRoutes as $roleName => $routeVars)
+		foreach (self::$routes as $role => $routes)
 		{
-			if ($roleName == "__ALL_ROLES__")
+			if ($role == "__ALL_ROLES__")
 			{
-				foreach (self::$roles as $rn)
+				foreach (array_keys(self::$routes) as $rn)
 				{
-					$addRoutes($routeVars, $rn);
+					if ($rn != '__ALL_ROLES__')
+					{
+						$addRoutes($routes, $rn);
+					}
 				}
 			}
 			else
 			{
-				$addRoutes($routeVars, $roleName);
+				$addRoutes($routes, $role);
 			}
 		}
-		foreach (self::$Config->routes as $roleName => $routeVars)
-		{
-			if ($roleName == "__ALL_ROLES__")
-			{
-				foreach (self::$roles as $rn)
-				{
-					$addRoutes($routeVars, $rn);
-				}
-			}
-			else
-			{
-				$addRoutes($routeVars, $roleName);
-			}
-		}
-		
-		$match = self::$Alto->match($requestUrlRoute);
+		$requestUrlRoute = self::getRequestUrl();
+		$match           = (object)self::$Alto->match($requestUrlRoute);
 		if (!$match)
 		{
 			if (!in_array(Http::getRequestMethod(), ["propfind", "options", "option"]))
@@ -167,11 +139,23 @@ class Route
 		}
 		else
 		{
-			$match = Variable::toObject($match, true);
-			addExtraErrorInfo("routeInfo", $match);
-			// Call session name before session start
-			define("USE_SESSION_NAME", $match->target->roleName);
-			define("ROUTE_TYPE", $match->target->roleName);
+			addExtraErrorInfo("routeMatch", $match);
+			self::$RouteNode->controller       = $match->target->controller;
+			self::$RouteNode->controllerMethod = $match->target->method;
+			self::$RouteNode->name             = $match->name;
+			self::$RouteNode->path             = $requestUrlRoute;
+			self::$RouteNode->isAjax           = (substr($requestUrlRoute, 0, 5) == "ajax/");
+			self::$RouteNode->role             = $match->target->role;
+			
+			if (is_callable($match->target->controller))
+			{
+				$m                         = $match->target->controller;
+				$controller                = $m($match);
+				$match->target->controller = $controller->controller;
+				$match->target->method     = $controller->method;
+			}
+			define("USE_SESSION_NAME", $match->target->role);
+			define("ROUTE_TYPE", $match->target->role);
 			define("ROUTE_PATH", $requestUrlRoute);
 			foreach ($match->params as $key => $val)
 			{
@@ -179,28 +163,21 @@ class Route
 			}
 			
 			$match->extra = new \stdClass();
-			if (isset(self::$Config->matchParsers[$match->name]))
-			{
-				self::$Config->matchParsers[$match->name]($match);
-			}
 			if (strpos($match->target->controller, '[') !== false)
 			{
 				$getNameFrom               = str_replace(['[', ']'], '', $match->target->controller);
 				$match->target->controller = $match->extra->$getNameFrom;
 			}
 			
-			if (strpos($match->target->action, '[') !== false)
+			if (strpos($match->target->method, '[') !== false)
 			{
-				$getNameFrom           = str_replace(['[', ']'], '', $match->target->action);
-				$match->target->action = $match->extra->$getNameFrom;
+				$getNameFrom           = str_replace(['[', ']'], '', $match->target->method);
+				$match->target->method = $match->extra->$getNameFrom;
 			}
 			
 			//Set router data
-			self::$RouteNode->action     = (isset($match->target)) ? $match->target->action : "";
-			self::$RouteNode->controller = $match->target->controller;
-			self::$RouteNode->name       = str_replace(self::$role . ".", "", $match->name);
-			self::$RouteNode->path       = $requestUrlRoute;
-			self::$RouteNode->isAjax     = (substr($requestUrlRoute, 0, 5) == "ajax/");
+			self::$RouteNode->controller       = $match->target->controller;
+			self::$RouteNode->controllerMethod = $match->target->method;
 		}
 		Prof()->stopTimer("Route::detect");
 		
@@ -239,6 +216,8 @@ class Route
 				$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
 			}
 		}
+		
+		
 		if (Http::existsGET('_rr') and AppConfig::isDevENV())
 		{
 			$a = Session::get('savedPost-' . Http::get('_rr'));
@@ -256,10 +235,16 @@ class Route
 		{
 			require_once Path::fookie('controller/ControlPanel.controller.php');
 		}
+		
+		
+		$methodName = self::$RouteNode->controllerMethod;
 		$Controller = new $controllerName();
 		$Controller->validate();
-		$methodName = (self::getAction()) ? self::getAction() : Http::getGET("methodName");
-		if (method_exists($Controller, $methodName))
+		if (Payload::haveError())
+		{
+			//
+		}
+		elseif (method_exists($Controller, $methodName))
 		{
 			$actionResult = $Controller->$methodName(...$controllerMethodArguments);
 			Payload::set($actionResult);
@@ -268,6 +253,21 @@ class Route
 		{
 			alert("$controllerName->$methodName not existing");
 		}
+	}
+	
+	public static function map(string $role, string $name, string $requestMethod, string $requestPath, $controller)
+	{
+		if (isset(self::$routes[$role][$name]))
+		{
+			alert("Route $role.$name is already defined");
+		}
+		$controller                 = is_callable($controller) ? $controller : trim($controller);
+		self::$routes[$role][$name] = (object)['method' => trim($requestMethod), 'path' => trim($requestPath), 'controller' => $controller];
+	}
+	
+	public static function setMatchType($name, $expression)
+	{
+		self::$Alto->addMatchTypes([$name => $expression]);
 	}
 	
 	public static function getName()
@@ -285,14 +285,24 @@ class Route
 		return self::$RouteNode->route;
 	}
 	
+	public static function getRole(): ?string
+	{
+		return self::$RouteNode->role;
+	}
+	
+	public static function isRole(string $checkRole)
+	{
+		return self::$RouteNode->role == $checkRole;
+	}
+	
 	public static function getController()
 	{
 		return self::$RouteNode->controller;
 	}
 	
-	public static function getAction()
+	public static function getControllerMethod()
 	{
-		return self::$RouteNode->action;
+		return self::$RouteNode->method;
 	}
 	
 	/**
@@ -359,7 +369,7 @@ class Route
 				$routeName = $pathOrName;
 			}
 			
-			return self::$Alto->generate($routeName, $params);
+			return "/" . self::$Alto->generate($routeName, $params);
 		}
 		else
 		{
@@ -372,6 +382,11 @@ class Route
 		$url = str_replace('//', '/', $url);
 		
 		return $url;
+	}
+	
+	public static function getOperationLink($params = null)
+	{
+		return self::getFullLink('OperationController', $params);
 	}
 	
 	public static function getFullLink(string $pathOrName = '', $params = null)

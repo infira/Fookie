@@ -7,6 +7,7 @@ use Infira\Fookie\facade\Http;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\facade\Session;
 use AppConfig;
+use Infira\Fookie\request\Payload;
 
 ClassFarm::add("Controller", "Controller");
 
@@ -15,7 +16,7 @@ ClassFarm::add("Controller", "Controller");
  */
 abstract class Controller extends \Infira\Utils\MagicClass
 {
-	private $authRequired       = true;
+	private $authRequired       = false;
 	private $allowOnlyDevAccess = false;
 	private $constructorCalled  = false;
 	
@@ -34,15 +35,6 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		{
 			debug(Route::getName());
 		}
-		
-		if ($this->authRequired === true and !$this->isUserAuthotized())
-		{
-			alert("auth requierd");
-		}
-		if ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
-		{
-			alert("oly dev envinronment can access this controller");
-		}
 	}
 	
 	/**
@@ -52,21 +44,31 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	{
 		if (!$this->constructorCalled)
 		{
-			alert(get_class($this) . ' __construct must be initialized');
+			Payload::setError(get_class($this) . ' __construct must be initialized');
+		}
+		elseif ($this->authRequired === true and !$this->isUserAuthotized())
+		{
+			Payload::setError("auth requierd");
+		}
+		elseif ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
+		{
+			Payload::setError("oly dev envinronment can access this controller");
 		}
 		
 		return true;
 	}
 	
-	private function isUserAuthotized()
+	protected function isUserAuthotized()
 	{
 		return true;
 	}
 	
-	/**
-	 * Set current controller to void authorization
-	 */
-	protected function allowUnAuthorisedAccess()
+	protected final function disAllowUnAuthorisedAccess()
+	{
+		$this->authRequired = true;
+	}
+	
+	protected final function allowUnAuthorisedAccess()
 	{
 		$this->authRequired = false;
 	}

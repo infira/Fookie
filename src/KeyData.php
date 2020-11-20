@@ -1,6 +1,9 @@
 <?php
 
 namespace Infira\Fookie;
+
+use Infira\Fookie\facade\Rm;
+
 class KeyData
 {
 	public static function get($name)
@@ -30,10 +33,14 @@ class KeyData
 	public static function set($name, $data)
 	{
 		$serialize = 0;
-		if (is_array($data) or is_object($data))
+		if (isSerializable($data))
 		{
 			$serialize = 1;
 			$data      = serialize($data);
+		}
+		else
+		{
+			alert("Cant serialize");
 		}
 		$Db = new TKeyData();
 		$Db->name($name);

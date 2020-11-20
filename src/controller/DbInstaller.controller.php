@@ -18,9 +18,18 @@ class DbInstaller extends Controller
 	
 	public function __construct()
 	{
-		$this->dbFiles['views'][]    = Path::dbViews();
+		$this->addViewPath(Path::dbViews());
 		$this->dbFiles['triggers'][] = Path::dbTriggers();
 		parent::__construct();
+	}
+	
+	public function addViewPath(string $path)
+	{
+		if (!is_dir($path))
+		{
+			alert("Must be corret path($path)");
+		}
+		$this->dbFiles['views'][] = $path;
 	}
 	
 	public function run()
@@ -159,7 +168,7 @@ class DbInstaller extends Controller
 			}
 			else
 			{
-				alert('View file(' . $file . ') not found');
+				alert('Fiel is not file or path(' . $file . ') not found');
 			}
 		}
 		

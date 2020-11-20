@@ -7,8 +7,9 @@ use Infira\Fookie\facade\Http;
 
 class Payload
 {
-	private static $data         = [];
-	private static $outputAsHTML = false;
+	private static $data            = [];
+	private static $plainPoutput    = false;
+	private static $plainJsonOutput = false;
 	
 	public static function init()
 	{
@@ -44,7 +45,7 @@ class Payload
 	{
 		if ($errorID)
 		{
-			self::setField("errorLink", Route::getFullLink('OperationControllerStarter', ['opName' => 'viewErrorLog', 'hash' => 'a12g3fs14g3d5h36gk56hilasd3a', 'ID' => $errorID]));
+			self::setField("errorLink", Route::getOperationLink(['opName' => 'viewErrorLog', 'hash' => 'a12g3fs14g3d5h36gk56hilasd3a', 'ID' => $errorID]));
 		}
 		self::setField("error", $error);
 	}
@@ -99,9 +100,15 @@ class Payload
 		}
 	}
 	
-	public static function outputHTML()
+	public static function plainOutput()
 	{
-		self::$outputAsHTML = true;
+		self::$plainPoutput = true;
+	}
+	
+	public static function plainJsonOutput()
+	{
+		self::setJSONHeader();
+		self::$plainJsonOutput = true;
 	}
 	
 	public static function getOutput(): string
@@ -110,7 +117,7 @@ class Payload
 		{
 			self::setField('repLink', str_replace('_sr', '_rr', Http::getCurrentUrl()));
 		}
-		if (self::$outputAsHTML)
+		if (self::$plainPoutput)
 		{
 			if (self::haveError())
 			{
@@ -118,6 +125,18 @@ class Payload
 			}
 			
 			return self::$data['payload'];
+		}
+		elseif (self::$plainJsonOutput)
+		{
+			if (self::haveError())
+			{
+				$err = self::$data['error'];
+				$err = strip_tags($err, '<br>');
+				
+				return $err;
+			}
+			
+			return json_encode(self::$data['payload']);
 		}
 		else
 		{

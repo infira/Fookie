@@ -1,5 +1,9 @@
 <?php
 
+namespace Infira\fookie;
+
+use Path;
+
 class Autoloader
 {
 	private static $namespaces = [];
@@ -8,11 +12,12 @@ class Autoloader
 	private static $classes    = [];
 	
 	
-	private static $includePaths                 = [];
-	private static $customClassess               = [];
+	private static $includePaths                = [];
+	private static $customClassess              = [];
 	private static $installPathsMethod;
 	private static $autoloadPhpFilePath;
-	private static $voidedAutoloadersOnNotExists = [];
+	private static $voidClassesOnNotExists      = [];
+	private static $voidClassPatternOnNotExists = [];
 	
 	public static function init()
 	{
@@ -70,53 +75,44 @@ class Autoloader
 			$phpAutoloadFileStr = '<?php' . "\n";
 			
 			$setted = [];
+			
+			$add = function ($type, $name, $file) use (&$setted, &$phpAutoloadFileStr)
+			{
+				$setNames              = [];
+				$setNames['class']     = 'classes';
+				$setNames['trait']     = 'traits';
+				$setNames['interface'] = 'interfaces';
+				$setName               = $setNames[$type];
+				
+				$name = str_replace('.' . $type . '.php', '', $name);
+				if (isset($setted[$setName][$name]))
+				{
+					cleanOutput(true);
+					echo 'Cant define autoloader class(' . $name . ') twice = ' . $file . BR;
+					echo 'Previousliy declared: ' . $setted[$setName][$name];
+					exit;
+				}
+				$phpAutoloadFileStr      .= 'self::$' . $setName . '[\'' . $name . '\'] = \'' . $file . '\';' . "\n";
+				$setted[$setName][$name] = $file;
+			};
+			
 			foreach (self::$includePaths as $path)
 			{
 				foreach (glob($path . "*.php") as $file)
 				{
-					$nasename                   = basename($file);
-					$setted['files'][$nasename] = str_replace(Path::root(), '', $file);
-					$source                     = file_get_contents($file);
-					$matches                    = [];
-					
-					if (strpos($nasename, '.class') !== false)
+					$basename                   = basename($file);
+					$setted['files'][$basename] = str_replace(Path::root(), '', $file);
+					if (strpos($basename, '.class') !== false)
 					{
-						$class = str_replace('.class.php', '', $nasename);
-						if (isset($setted['classes'][$class]))
-						{
-							cleanOutput(true);
-							echo 'Cant define autoloader class(' . $class . ') twice = ' . $file . BR;
-							echo 'Previousliy declared: ' . $setted['classes'][$class];
-							exit;
-						}
-						$phpAutoloadFileStr        .= 'self::$classes[\'' . $class . '\'] = \'' . $file . '\';' . "\n";
-						$setted['classes'][$class] = $file;
+						$add('class', $basename, $file);
 					}
-					elseif (strpos($nasename, '.int') !== false)
+					elseif (strpos($basename, '.int') !== false)
 					{
-						$interface = str_replace('.int.php', '', $nasename);
-						if (isset($setted['interfaces'][$interface]))
-						{
-							cleanOutput(true);
-							echo 'Cant define autoloader interface(' . $interface . ') twice = ' . $file . BR;
-							echo 'Previousliy declared: ' . $setted['interfaces'][$interface];
-							exit;
-						}
-						$phpAutoloadFileStr               .= 'self::$interfaces[\'' . $interface . '\'] = \'' . $file . '\';' . "\n";
-						$setted['interfaces'][$interface] = $interface;
+						$add('interface', $basename, $file);
 					}
-					elseif (strpos($nasename, '.trait') !== false)
+					elseif (strpos($basename, '.trait') !== false)
 					{
-						$trait = str_replace('.trait.php', '', $nasename);
-						if (isset($setted['traits'][$trait]))
-						{
-							cleanOutput(true);
-							echo 'Cant define autoloader trait(' . $trait . ') twice = ' . $file . BR;
-							echo 'Previousliy declared: ' . $setted['traits'][$trait];
-							exit;
-						}
-						$phpAutoloadFileStr       .= 'self::$traits[\'' . $trait . '\'] = \'' . $file . '\';' . "\n";
-						$setted['traits'][$trait] = $file;
+						$add('trait', $basename, $file);
 					}
 				}
 			}
@@ -125,6 +121,10 @@ class Autoloader
 				$setted['namespaces'][$nsClass] = $path;
 				$phpAutoloadFileStr             .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
 			}
+			foreach (self::$customClassess as $class => $path)
+			{
+				$add('class', $class, $path);
+			}
 			$phpAutoloadFileStr .= "\n" . '?>';
 			file_put_contents(self::$autoloadPhpFilePath, trim($phpAutoloadFileStr));
 			if (self::isInstall(false))
@@ -132,7 +132,9 @@ class Autoloader
 				if (!isset($_GET["minOutput"]))
 				{
 					echo "<pre>";
-					print_r($setted);
+					$tmp = $setted;
+					unset($tmp['files']);
+					print_r($tmp);
 					echo "<pre>";
 					exit("ok");
 				}
@@ -152,7 +154,7 @@ class Autoloader
 		Prof()->stopTimer("Autoloader->loadClassLocations");
 		
 		
-		spl_autoload_register(['Autoloader', 'loader'], true);
+		spl_autoload_register(['\Infira\fookie\Autoloader', 'loader'], true);
 	}
 	
 	public static function setInstallPathGetter(callable $callback)
@@ -160,13 +162,16 @@ class Autoloader
 		self::$installPathsMethod = $callback;
 	}
 	
-	public static function voidOnNotExists($className)
+	public static function voidOnNotExists($pattern)
 	{
-		if (!isset(self::$voidedAutoloadersOnNotExists))
+		if ($pattern{0} == '/')
 		{
-			self::$voidedAutoloadersOnNotExists = [];
+			self::$voidClassPatternOnNotExists[$pattern] = $pattern;
 		}
-		self::$voidedAutoloadersOnNotExists[$className] = $className;
+		else
+		{
+			self::$voidClassesOnNotExists[$pattern] = $pattern;
+		}
 	}
 	
 	private static function isInstall($checkFile = false)
@@ -216,14 +221,24 @@ class Autoloader
 		}
 		else
 		{
-			if (isset(self::$voidedAutoloadersOnNotExists[$className]))
+			if (isset(self::$voidClassesOnNotExists[$className]))
 			{
 				return true;
 			}
 			else
 			{
-				alert("Autoloader: class '$className found");
+				if (count(self::$voidClassPatternOnNotExists) > 0)
+				{
+					foreach (self::$voidClassPatternOnNotExists as $pattern)
+					{
+						if (\Infira\Utils\Regex::isMatch($pattern, $className))
+						{
+							return true;
+						}
+					}
+				}
 			}
+			alert("Autoloader: class '$className found");
 		}
 		Prof()->stopTimer("Autoloader->load");
 	}

@@ -5,6 +5,7 @@ define("BREAK_", "_______BREAK_______");
 define("CONTINUE_", "_______CONTINUE_______");
 define("VOID_", "_______VOID_______");
 define("SKIP_", "_______SKIP_______");
+define("GLOBAL_VAT_PERCENT", 20);
 
 // PHP_VERSION_ID is available as of PHP 5.2.7, if our
 // version is lower than that, then emulate it

@@ -7,13 +7,12 @@ use Infira\Fookie\config\Entries as ConfigEntries;
 abstract class Manager
 {
 	
-	public final static function init()
+	public static function init()
 	{
 		if (!ConfigEntries::get('__configIsIntialized'))
 		{
 			ConfigEntries::addDefaultValue("defaultCacheDriver", "sess");
 			ConfigEntries::addDefaultValue("dbCacheDriver", "sess");
-			ConfigEntries::addDefaultValue("adaptiveImgHandlerClassName", "LibsAdaptiveImgHandler");
 			ConfigEntries::addDefaultValue("__configIsIntialized", true);
 			ConfigEntries::addDefaultValue("voidDbTableClassInstall", []);
 			self::routeGETParameter('route');
@@ -120,11 +119,6 @@ abstract class Manager
 	public final static function cacheBaseAlias($alias = null)
 	{
 		return self::setGetVar("cacheBaseAlias", $alias, "string", "CACHE_BASE_ALIAS");
-	}
-	
-	public final static function adaptiveImgHandlerClassName($className = null)
-	{
-		return self::setGetVar("adaptiveImgHandlerClassName", $className);
 	}
 	
 	/**
@@ -245,24 +239,6 @@ abstract class Manager
 	public final static function voidDbTableClassInstall(array $array = null)
 	{
 		return self::setGetVar("voidDbTableClassInstall", $array, "array");
-	}
-	
-	/**
-	 * Get routes array
-	 *
-	 * @return array
-	 */
-	public final static function getRoutes(): object
-	{
-		$routes = [];
-		require_once \Path::config("routes.php");
-		
-		$output               = new \stdClass();
-		$output->routes       = isset($routes) ? is_array($routes) ? $routes : [] : [];
-		$output->matchParsers = isset($matchParsers) ? is_array($matchParsers) ? $matchParsers : [] : [];
-		$output->matchTypes   = isset($matchTypes) ? is_array($matchTypes) ? $matchTypes : [] : [];
-		
-		return $output;
 	}
 	
 	/**
