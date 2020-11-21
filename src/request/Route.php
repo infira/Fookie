@@ -40,7 +40,7 @@ class Route
 		self::map('system', 'ControlPanelSubClass', 'GET', 'controlpanel/[:subClass]', '\Infira\Fookie\controller\ControlPanel#subClass');
 		
 		$operationController = Fookie::optExists('operationController') ? Fookie::opt('operationController') : '\Infira\Fookie\controller\Operation';
-		self::map('system', 'OperationController', 'GET', 'op/[:opName]', "$operationController#handle");
+		self::map('system', 'Operation', 'GET', 'op/[:opName]', "$operationController#handle");
 		self::blockHTTPOrigin("chrome-extension://aegnopegbbhjeeiganiajffnalhlkkjb"); //it causes lots of _post requests to server it is that plugin https://chrome.google.com/webstore/detail/browser-safety/aegnopegbbhjeeiganiajffnalhlkkjb
 	}
 	
@@ -119,7 +119,8 @@ class Route
 			}
 		}
 		$requestUrlRoute = self::getRequestUrl();
-		$match           = (object)self::$Alto->match($requestUrlRoute);
+		$match           = self::$Alto->match($requestUrlRoute);
+		//debug($match);exit;
 		if (!$match)
 		{
 			if (!in_array(Http::getRequestMethod(), ["propfind", "options", "option"]))
@@ -139,6 +140,7 @@ class Route
 		}
 		else
 		{
+			$match = (object)$match;
 			addExtraErrorInfo("routeMatch", $match);
 			self::$RouteNode->controller       = $match->target->controller;
 			self::$RouteNode->controllerMethod = $match->target->method;
@@ -206,22 +208,26 @@ class Route
 			{
 				Http::setPOST($name, $val);
 			}
-			if (Http::existsGET('_sr') and AppConfig::isDevENV())
-			{
-				Session::set('savedPost-' . Http::get('_sr'), Http::getPOST());
-			}
-			
 			if (Http::existsPOST("ajaxMethodArguments"))
 			{
 				$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
+			}
+			
+			if (Http::existsGET('_sr') and AppConfig::isDevENV())
+			{
+				$sr = Http::getGET('_sr');
+				Session::set("savedPost-$sr", Http::getPOST());
+				Session::set("saveControllerMethodArguments-$sr", $controllerMethodArguments);
 			}
 		}
 		
 		
 		if (Http::existsGET('_rr') and AppConfig::isDevENV())
 		{
-			$a = Session::get('savedPost-' . Http::get('_rr'));
-			Http::flushPOST((is_array($a) ? $a : []));
+			$rr                        = Http::getGET('_rr');
+			$post                      = Session::get("savedPost-$rr", Http::getPOST());
+			$controllerMethodArguments = Session::get("saveControllerMethodArguments-$rr", $controllerMethodArguments);
+			Http::flushPOST((is_array($post) ? $post : []));
 			$_SERVER['REQUEST_METHOD'] = 'post';
 		}
 		
@@ -261,7 +267,14 @@ class Route
 		{
 			alert("Route $role.$name is already defined");
 		}
-		$controller                 = is_callable($controller) ? $controller : trim($controller);
+		$controller = is_callable($controller) ? $controller : trim($controller);
+		if (is_string($controller))
+		{
+			if (strpos($controller, '#') === false)
+			{
+				alert("Controller($controller) method is undefined");
+			}
+		}
 		self::$routes[$role][$name] = (object)['method' => trim($requestMethod), 'path' => trim($requestPath), 'controller' => $controller];
 	}
 	
@@ -386,7 +399,7 @@ class Route
 	
 	public static function getOperationLink($params = null)
 	{
-		return self::getFullLink('OperationController', $params);
+		return self::getFullLink('Operation', $params);
 	}
 	
 	public static function getFullLink(string $pathOrName = '', $params = null)

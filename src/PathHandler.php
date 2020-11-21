@@ -1,6 +1,7 @@
 <?php
 
 namespace Infira\Fookie;
+
 abstract class PathHandler
 {
 	public static function init()
@@ -119,25 +120,108 @@ abstract class PathHandler
 		}
 		if (!$root)
 		{
-			$root = Path::root();
+			$root = self::root();
 		}
 		$path = str_replace($root, "", $path);
-		$path = str_replace(Path::root(false, true), "", $path);
+		$path = str_replace(self::root(false, true), "", $path);
 		$path = str_replace(self::fix(realpath(self::root("../"))), "", $path);
 		
 		return $path;
 	}
 	
+	//################################################################### SOF APP paths
+	
+	public static function app($file = "", $getAsUrl = false)
+	{
+		return self::root("app/" . $file, $getAsUrl);
+	}
+	
+	public static final function assets($file = "", $getAsUrl = false)
+	{
+		return self::app("assets/" . $file, $getAsUrl);
+	}
+	
+	public static final function controller($file = "", $getAsUrl = false)
+	{
+		return self::app("controller/" . $file, $getAsUrl);
+	}
+	
+	public static final function facade($file = "", $getAsUrl = false)
+	{
+		return self::app("facade/" . $file, $getAsUrl);
+	}
+	
+	public static final function helper($file = "", $getAsUrl = false)
+	{
+		return self::app("helper/" . $file, $getAsUrl);
+	}
+	
+	public static final function model($file = "", $getAsUrl = false)
+	{
+		return self::app("model/" . $file, $getAsUrl);
+	}
+	
+	public static final function modelModels($file = "", $getAsUrl = false)
+	{
+		return self::model("models/" . $file, $getAsUrl);
+	}
+	
+	public static final function modelExtensions($file = "", $getAsUrl = false)
+	{
+		return self::model("extensions/" . $file, $getAsUrl);
+	}
+	
+	public static final function service($file = "", $getAsUrl = false)
+	{
+		return self::app("service/" . $file, $getAsUrl);
+	}
+	
+	public static final function view($file = "", $getAsUrl = false)
+	{
+		return self::app("view/" . $file, $getAsUrl);
+	}
+	
+	//################################################################### EOF APP paths
+	
+	//################################################################### SOF Fookie paths
+	public static final function fookie($file = "", $getAsUrl = false)
+	{
+		return self::root("vendor/infira/fookie/src/" . $file, $getAsUrl);
+	}
+	
+	public static final function fookieJS($file = "", $getAsUrl = false)
+	{
+		return self::fookie("js/" . $file, $getAsUrl);
+	}
+	
+	public static final function fookieTraits($file = "", $getAsUrl = false)
+	{
+		return self::fookie("traits/" . $file, $getAsUrl);
+	}
+	
+	public static function db(string $file = "", bool $getAsUrl = false)
+	{
+		return self::root("db/" . $file, $getAsUrl);
+	}
+	
+	public static function dbViews(string $file = "", bool $getAsUrl = false)
+	{
+		return self::db("views/" . $file, $getAsUrl);
+	}
+	
+	public static function dbTriggers(string $file = "", bool $getAsUrl = false)
+	{
+		return self::db("triggers/" . $file, $getAsUrl);
+	}
+	
+	public static function systemUpdates(string $file = "", bool $getAsUrl = false)
+	{
+		return self::db("updates/" . $file, $getAsUrl);
+	}
+	
+	//################################################################### SOF Fookie paths
 	
 	abstract public static function config(string $file = "", bool $getAsUrl = false);
-	
-	abstract public static function modelModels(string $file = "", bool $getAsUrl = false);
-	
-	abstract public static function modelExtensions(string $file = "", bool $getAsUrl = false);
-	
-	abstract public static function dbViews(string $file = "", bool $getAsUrl = false);
-	
-	abstract public static function systemUpdates(string $file = "", bool $getAsUrl = false);
 }
 
 ?>

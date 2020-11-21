@@ -1,0 +1,7 @@
+<?php
+
+trait PoesisDataMethodsExtendor2
+{
+}
+
+?>

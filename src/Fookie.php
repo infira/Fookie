@@ -23,11 +23,14 @@ class Fookie
 	 */
 	public static function boot()
 	{
-		Autoloader::voidOnNotExists('PoesisDataMethodsExtendor2');
+		Autoloader::setPath('PoesisDataMethodsExtendor2', __DIR__ . '/traits/PoesisDataMethodsExtendor2.trait.php');
 		Autoloader::init();
-		\AppConfig::finalize();
+		
 		Poesis::init();
-		\Infira\Poesis\Autoloader::setDataGettersExtendorPath(Path::fookie('helper/PoesisDataMethodsExtendor.trait.php'));
+		\Infira\Poesis\Autoloader::setDataGettersExtendorPath(Path::fookieTraits('PoesisDataMethodsExtendor.trait.php'));
+		
+		\AppConfig::finalize();
+		
 		Poesis::setDefaultConnection(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 		Poesis::useInfiraErrorHadler();
 		Session::init();

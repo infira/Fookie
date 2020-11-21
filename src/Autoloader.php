@@ -19,18 +19,25 @@ class Autoloader
 	private static $voidClassesOnNotExists      = [];
 	private static $voidClassPatternOnNotExists = [];
 	
+	private static $isInited = false;
+	
 	public static function init()
 	{
+		if (self::$isInited)
+		{
+			return true;
+		}
+		self::$isInited            = true;
 		self::$autoloadPhpFilePath = Path::temp('autoloadClasslocations.php');
 		$path                      = pathinfo(self::$autoloadPhpFilePath, PATHINFO_DIRNAME);
 		if (!is_dir($path))
 		{
-			exit("TEMP path for installing autoloader not existing");
+			alert("TEMP path for installing autoloader not existing");
 			exit;
 		}
 		if (!is_writable($path))
 		{
-			exit("TEMP path for installing autoloader is not writable");
+			alert("TEMP path for installing autoloader is not writable");
 		}
 		
 		if (self::isInstall(true))
@@ -43,6 +50,7 @@ class Autoloader
 			if (is_callable(self::$installPathsMethod))
 			{
 				$installPaths   = [];
+				$installPaths[] = [Path::app(), true];
 				$installPaths[] = ['ns:Infira\Fookie', Path::fookie()];
 				$installPaths[] = ['ns:Infira\Fookie\facade', Path::fookie('facade/')];
 				$installPaths[] = ['ns:Infira\Fookie\request', Path::fookie('request/')];
@@ -55,16 +63,59 @@ class Autoloader
 						$dir = $path[1];
 						if (!is_dir($dir))
 						{
-							exit($dir . ' is not a dir');
+							alert($dir . ' is not a dir');
 						}
-						self::addNamespace($dir, substr($path[0], 3));
+						$namespace = substr($path[0], 3);
+						
+						$dir = trim($dir);
+						$dir = Path::fix($dir);
+						if (is_dir($dir))
+						{
+							$handler = scandir($dir);
+							foreach ($handler as $nDir)
+							{
+								if (!in_array($nDir, [" . git", " . svn"]))
+								{
+									if ($nDir != " ..")
+									{
+										$f = $dir . $nDir;
+										if (is_file($f))
+										{
+											$cn = str_replace(['.class', '.trait', '.controller', '.interface'], '', pathinfo($f)['filename']);
+											$cn = str_replace('.controller', '', $cn);
+											$ns = $namespace . '\\' . $cn;
+											if ($ns{(strlen($ns) - 1)} == '\\')
+											{
+												$ns = substr($ns, 0, -1);
+											}
+											$pi = pathinfo($f);
+											if (isset($pi['extension']))
+											{
+												if ($pi['extension'] == 'php')
+												{
+													if (isset(self::$namespaces[$ns]))
+													{
+														alert("Namespaces($ns) is already added");
+													}
+													self::$namespaces[$ns] = $f;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							alert("addIncludePath > $dir is not dir");
+						}
 					}
 					else
 					{
 						$dir = $path[0];
 						if (!is_dir($dir))
 						{
-							exit($dir . ' is not a dir');
+							alert($dir . ' is not a dir');
 						}
 						self::addIncludePath($path[0], $path[1]);
 					}
@@ -83,8 +134,7 @@ class Autoloader
 				$setNames['trait']     = 'traits';
 				$setNames['interface'] = 'interfaces';
 				$setName               = $setNames[$type];
-				
-				$name = str_replace('.' . $type . '.php', '', $name);
+				$name                  = str_replace('.' . $type . '.php', '', $name);
 				if (isset($setted[$setName][$name]))
 				{
 					cleanOutput(true);
@@ -119,7 +169,12 @@ class Autoloader
 			foreach (self::$namespaces as $nsClass => $path)
 			{
 				$setted['namespaces'][$nsClass] = $path;
-				$phpAutoloadFileStr             .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
+				$phpAutoloadFileStr .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
+			}
+			foreach (self::$interfaces as $nsClass => $path)
+			{
+				$setted['interfaces'][$nsClass] = $path;
+				$phpAutoloadFileStr             .= 'self::$interfaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
 			}
 			foreach (self::$customClassess as $class => $path)
 			{
@@ -148,11 +203,10 @@ class Autoloader
 		Prof()->startTimer("Autoloader->loadClassLocations");
 		if (!file_exists(self::$autoloadPhpFilePath))
 		{
-			exit(self::$autoloadPhpFilePath . " does not exists");
+			alert(self::$autoloadPhpFilePath . " does not exists");
 		}
 		require_once self::$autoloadPhpFilePath;
 		Prof()->stopTimer("Autoloader->loadClassLocations");
-		
 		
 		spl_autoload_register(['\Infira\fookie\Autoloader', 'loader'], true);
 	}
@@ -238,56 +292,14 @@ class Autoloader
 					}
 				}
 			}
-			alert("Autoloader: class '$className found");
+			alert("Autoloader: class '$className' not found");
 		}
 		Prof()->stopTimer("Autoloader->load");
 	}
 	
-	public static function addCustomClass($className, $classFileLocation)
+	public static function setPath($className, $classFileLocation)
 	{
 		self::$customClassess[$className] = $classFileLocation;
-	}
-	
-	private static function addNamespace($dir, $namespace)
-	{
-		$dir = trim($dir);
-		$dir = Path::fix($dir);
-		if (is_dir($dir))
-		{
-			$handler = scandir($dir);
-			foreach ($handler as $nDir)
-			{
-				if (!in_array($nDir, [" . git", " . svn"]))
-				{
-					if ($nDir != " ..")
-					{
-						$f = $dir . $nDir;
-						if (is_file($f))
-						{
-							$cn = str_replace(['.class'], '', pathinfo($f)['filename']);
-							$cn = str_replace('.controller', '', $cn);
-							$ns = $namespace . '\\' . $cn;
-							if ($ns{(strlen($ns) - 1)} == '\\')
-							{
-								$ns = substr($ns, 0, -1);
-							}
-							$pi = pathinfo($f);
-							if (isset($pi['extension']))
-							{
-								if ($pi['extension'] == 'php')
-								{
-									self::$namespaces[$ns] = $f;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			alert("addIncludePath > $dir is not dir");
-		}
 	}
 	
 	private static function addIncludePath($dir, $recursive = false)
@@ -296,6 +308,10 @@ class Autoloader
 		$dir = Path::fix($dir);
 		if (is_dir($dir))
 		{
+			if (isset(self::$includePaths[$dir]))
+			{
+				alert("Path($dir) is already added");
+			}
 			self::$includePaths[$dir] = $dir;
 			if ($recursive)
 			{
@@ -315,7 +331,6 @@ class Autoloader
 									$sDir = Path::fix($dir . $nDir);
 									if (is_dir($sDir))
 									{
-										self::$includePaths[$sDir] = $sDir;
 										self::addIncludePath($sDir, true);
 									}
 								}

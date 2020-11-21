@@ -1,6 +1,7 @@
 <?php
 
 namespace Infira\Fookie\facade;
+
 /**
  * Class Db
  * @method static null close()
@@ -24,7 +25,7 @@ class Db extends Facade
 	
 	public static function getInstanceConfig()
 	{
-		return ["ns" => "Database", "instance" => function ()
+		return ["name" => "Database", "constructor" => function ()
 		{
 			return self::connection();
 		}];

@@ -8,9 +8,9 @@ class KeyData
 {
 	public static function get($name)
 	{
-		return Rm::once($name, function ($name)
+		return Rm::once($name, function () use (&$name)
 		{
-			$Db       = new TKeyData();
+			$Db       = new \TKeyData();
 			$Db->name = $name;
 			$obj      = $Db->select()->getObject();
 			if (is_object($obj))
