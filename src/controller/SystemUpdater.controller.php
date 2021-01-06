@@ -81,8 +81,8 @@ class SystemUpdater extends Controller
 				}
 				if ($ok === true)
 				{
+					debug($sql);
 					$Db            = Db::TSqlUpdates();
-					$Db->isSystem  = $isSystem;
 					$Db->updateNr  = $updateNr;
 					$Db->isSystem  = $isSystem;
 					$Db->installed = 1;
@@ -92,7 +92,6 @@ class SystemUpdater extends Controller
 						$scriptFile = $phpSqcriptDir . $fileName;
 						if (Http::getGet("reset") == 0)
 						{
-							debug($sql);
 							$this->runPhpScript($scriptFile);
 						}
 						
@@ -105,7 +104,6 @@ class SystemUpdater extends Controller
 					{
 						if (Http::getGet("reset") == 0)
 						{
-							debug($sql);
 							Db::realQuery($sql);
 						}
 						$Db->sqlQuery          = $sql;

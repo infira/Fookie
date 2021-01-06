@@ -100,7 +100,7 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		$db = DB_NAME;
 		$r  .= "<h4>Update</h4>";
 		$r  .= $this->getButton("Install updates", "updates", ["reset" => 0]);
-		$r  .= $this->getButton("Reset System updates", "updates", ["reset" => 1]);
+		$r  .= $this->getButton("Reset updates", "updates", ["reset" => 1]);
 		$r  .= " | ";
 		$r  .= "<h4>Database: $db</h4>";
 		$r  .= $this->getButton("Views", 'db', ['task' => "views"]);

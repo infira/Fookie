@@ -1,6 +1,9 @@
 <?php
 
 namespace Infira\Fookie;
+
+use Infira\Utils\Date;
+
 /**
  * This class handles users and php errors
  */
@@ -17,15 +20,14 @@ class Log
 	 */
 	private static function doMake(string $title, $content, bool $isError = false)
 	{
-		$Db        = new TLog();
+		$Db        = new \TLog();
 		$Db->title = $title;
 		$userID    = 0;
 		if (defined("__USER_ID"))
 		{
 			$userID = __USER_ID;
 		}
-		$Db->userID       = $userID;
-		$Db->isSerialized = 0;
+		$Db->userID = $userID;
 		if (isSerializable($content))
 		{
 			$Db->isSerialized = 1;
@@ -33,11 +35,11 @@ class Log
 		}
 		else
 		{
+			$Db->isSerialized(0);
 			alert("Cant serialize");
 		}
-		$Db->content    = "a";
+		$Db->content    = $content;
 		$Db->insertDate = Date::nowSqlDateTime();
-		$Db->isHandled  = false;
 		$Db->isError    = ($isError) ? 1 : 0;
 		$Db->ip         = getUserIP();
 		$Db->save();
@@ -53,7 +55,7 @@ class Log
 	 * @param string $content
 	 * @return int|object
 	 */
-	public static function make(string $title, string $content)
+	public static function make(string $title, $content)
 	{
 		return self::doMake($title, $content, false);
 	}
