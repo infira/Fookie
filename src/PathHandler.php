@@ -2,6 +2,8 @@
 
 namespace Infira\Fookie;
 
+use Path;
+
 abstract class PathHandler
 {
 	public static function init()
@@ -32,28 +34,34 @@ abstract class PathHandler
 		define("SITE_URL", $serverUrl);
 	}
 	
-	public static final function root($path = "", $getAsUrl = false)
+	public static final function root(string $path = "", $getAsUrl = false)
 	{
-		if (func_num_args() > 2)
-		{
-			alert("Cannot use over 2 arguments");
-		}
-		if ($path === false)
-		{
-			$path = "";
-		}
-		if (!is_string($path))
-		{
-			addExtraErrorInfo("path", var_dump($path));
-			addExtraErrorInfo("pathType", gettype($path));
-			alert("Must be string");
-		}
+		return self::base(BASE_DIR, $path, $getAsUrl);
+	}
+	
+	public static final function app(string $path = "", $getAsUrl = false)
+	{
+		return self::base(APP_DIR, $path, $getAsUrl);
+	}
+	
+	public static final function temp($file = "", $getAsUrl = false)
+	{
+		return self::base(TEMP_DIR, $file, $getAsUrl);
+	}
+	
+	private static final function base(string $base, string $path = "", $getAsUrl = false)
+	{
 		if (is_dir($path))
 		{
 			$path = self::fix($path);
 		}
-		$path = str_replace(BASE_DIR, "", $path);
-		$path = BASE_DIR . $path;
+		$base = self::fix($base);
+		if (!is_dir($base))
+		{
+			alert("Basedir($base) must be dir");
+		}
+		$path = str_replace($base, "", $path);
+		$path = $base . $path;
 		if ($getAsUrl)
 		{
 			return self::toUrl($path);
@@ -130,11 +138,6 @@ abstract class PathHandler
 	}
 	
 	//################################################################### SOF APP paths
-	
-	public static function app($file = "", $getAsUrl = false)
-	{
-		return self::root("app/" . $file, $getAsUrl);
-	}
 	
 	public static final function assets($file = "", $getAsUrl = false)
 	{

@@ -3,12 +3,22 @@
 namespace Infira\Fookie;
 
 use Infira\Fookie\facade\Rm;
+use Db;
 
 class KeyData
 {
+	public static function exists(string $name): bool
+	{
+		return Rm::once(['KeyData->exists', $name], function () use (&$name)
+		{
+			return Db::TKeyData()->name($name)->hasRows();
+		});
+	}
+	
+	
 	public static function get($name)
 	{
-		return Rm::once($name, function () use (&$name)
+		return Rm::once(['KeyData->get', $name], function () use (&$name)
 		{
 			$Db       = new \TKeyData();
 			$Db->name = $name;
@@ -42,7 +52,7 @@ class KeyData
 		{
 			alert("Cant serialize");
 		}
-		$Db = new TKeyData();
+		$Db = new \TKeyData();
 		$Db->name($name);
 		$Db->data($data);
 		$Db->unSerialize($serialize);

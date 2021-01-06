@@ -59,10 +59,9 @@ class Route
 		return $url;
 	}
 	
-	public static function handle()
+	public static function detect()
 	{
 		Prof()->startTimer("Route::detect");
-		
 		self::$RouteNode = new RouteNode();
 		if (Http::getRequestMethod() == "head") //in case of head must return "" https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
 		{
@@ -156,7 +155,6 @@ class Route
 				$match->target->controller = $controller->controller;
 				$match->target->method     = $controller->method;
 			}
-			define("USE_SESSION_NAME", $match->target->role);
 			define("ROUTE_TYPE", $match->target->role);
 			define("ROUTE_PATH", $requestUrlRoute);
 			foreach ($match->params as $key => $val)
@@ -176,14 +174,15 @@ class Route
 				$getNameFrom           = str_replace(['[', ']'], '', $match->target->method);
 				$match->target->method = $match->extra->$getNameFrom;
 			}
-			
 			//Set router data
 			self::$RouteNode->controller       = $match->target->controller;
 			self::$RouteNode->controllerMethod = $match->target->method;
 		}
 		Prof()->stopTimer("Route::detect");
-		
-		
+	}
+	
+	public static function boot()
+	{
 		$controllerMethodArguments = [];
 		
 		if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $_SERVER["CONTENT_TYPE"]))

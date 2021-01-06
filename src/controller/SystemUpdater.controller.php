@@ -27,7 +27,7 @@ class SystemUpdater extends Controller
 		$queries  = [];
 		if (Http::getGet("reset") == 1 or Http::getGet("delete") == 1)
 		{
-			Db::TSqlUpdates()->set("isSystem", $isSystem)->delete();
+			Db::TSqlUpdates()->isSystem($isSystem)->delete();
 			if (Http::getGet("delete") === 1)
 			{
 				exit("Deleted");
@@ -63,7 +63,7 @@ class SystemUpdater extends Controller
 			$dbUpdates = [];
 			if (Http::getGet("reset") == 0)
 			{
-				$dbUpdates = Db::TSqlUpdates()->set("isSystem", $isSystem)->select()->getValueAsKey("updateNr");
+				$dbUpdates = Db::TSqlUpdates()->isSystem($isSystem)->select()->getValueAsKey("updateNr");
 			}
 			foreach ($queries as $updateNr => $sql)
 			{

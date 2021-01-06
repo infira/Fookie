@@ -30,9 +30,11 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 			{
 				echo $output . BR . BR;
 			}
-			exit("task completed");
+			
+			return 'task completed';
 		}
-		exit("task failed");
+		
+		return 'task failed';
 	}
 	
 	public function subClass()
@@ -52,7 +54,7 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		}
 		else
 		{
-			exit("Unknown controller");
+			alert("Unknown controller");
 		}
 		$Db = new $className();
 		

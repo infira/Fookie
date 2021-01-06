@@ -5,7 +5,7 @@ namespace Infira\Fookie\facade;
 /**
  * Class Db
  * @method static null close()
- * @method static Infira\Poesis\dr\DataRetrieval dr(string $query)
+ * @method static \Infira\Poesis\dr\DataRetrieval dr(string $query)
  * @method static mysqli_result query(string $query)
  * @method static bool realQuery(string $query)
  * @method static void multiQuery(string $query, callable|bool $callback)
@@ -17,13 +17,13 @@ namespace Infira\Fookie\facade;
  * @method static bool setVar(string $name, bool $value = false)
  * @method static mixed getVar(string $name)
  */
-class Db extends Facade
+class Db extends \Infira\Utils\Facade
 {
 	use \PoesisModelShortcut;
 	
 	private static $connections = [];
 	
-	public static function getInstanceConfig()
+	public static function getInstanceConfig(): array
 	{
 		return ["name" => "Database", "constructor" => function ()
 		{

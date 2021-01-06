@@ -32,17 +32,16 @@ class Autoloader
 		$path                      = pathinfo(self::$autoloadPhpFilePath, PATHINFO_DIRNAME);
 		if (!is_dir($path))
 		{
-			alert("TEMP path for installing autoloader not existing");
-			exit;
+			self::error("TEMP path for installing autoloader not existing");
 		}
 		if (!is_writable($path))
 		{
-			alert("TEMP path for installing autoloader is not writable");
+			self::error("TEMP path for installing autoloader is not writable");
 		}
 		
 		if (self::isInstall(true))
 		{
-			if (!isset($_GET["minOutput"]) and self::isInstall(false))
+			if (self::canDisplay())
 			{
 				$r = '<button type="button" onclick="window.location=\'/controlpanel/\'">Go to control panel</button>';
 				echo $r;
@@ -63,7 +62,7 @@ class Autoloader
 						$dir = $path[1];
 						if (!is_dir($dir))
 						{
-							alert($dir . ' is not a dir');
+							self::error($dir . ' is not a dir');
 						}
 						$namespace = substr($path[0], 3);
 						
@@ -95,7 +94,7 @@ class Autoloader
 												{
 													if (isset(self::$namespaces[$ns]))
 													{
-														alert("Namespaces($ns) is already added");
+														self::error("Namespaces($ns) is already added");
 													}
 													self::$namespaces[$ns] = $f;
 												}
@@ -107,7 +106,7 @@ class Autoloader
 						}
 						else
 						{
-							alert("addIncludePath > $dir is not dir");
+							self::error("addIncludePath > $dir is not dir");
 						}
 					}
 					else
@@ -115,7 +114,7 @@ class Autoloader
 						$dir = $path[0];
 						if (!is_dir($dir))
 						{
-							alert($dir . ' is not a dir');
+							self::error($dir . ' is not a dir');
 						}
 						self::addIncludePath($path[0], $path[1]);
 					}
@@ -137,10 +136,9 @@ class Autoloader
 				$name                  = str_replace('.' . $type . '.php', '', $name);
 				if (isset($setted[$setName][$name]))
 				{
-					cleanOutput(true);
-					echo 'Cant define autoloader class(' . $name . ') twice = ' . $file . BR;
-					echo 'Previousliy declared: ' . $setted[$setName][$name];
-					exit;
+					$msg = 'Cant define autoloader class(' . $name . ') twice = ' . $file . BR;
+					$msg .= 'Previousliy declared: ' . $setted[$setName][$name];
+					$this->error($msg);
 				}
 				$phpAutoloadFileStr      .= 'self::$' . $setName . '[\'' . $name . '\'] = \'' . $file . '\';' . "\n";
 				$setted[$setName][$name] = $file;
@@ -169,7 +167,7 @@ class Autoloader
 			foreach (self::$namespaces as $nsClass => $path)
 			{
 				$setted['namespaces'][$nsClass] = $path;
-				$phpAutoloadFileStr .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
+				$phpAutoloadFileStr             .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
 			}
 			foreach (self::$interfaces as $nsClass => $path)
 			{
@@ -182,28 +180,24 @@ class Autoloader
 			}
 			$phpAutoloadFileStr .= "\n" . '?>';
 			file_put_contents(self::$autoloadPhpFilePath, trim($phpAutoloadFileStr));
-			if (self::isInstall(false))
+			if (self::canDisplay())
 			{
-				if (!isset($_GET["minOutput"]))
-				{
-					echo "<pre>";
-					$tmp = $setted;
-					unset($tmp['files']);
-					print_r($tmp);
-					echo "<pre>";
-					exit("ok");
-				}
-				else
-				{
-					echo "autloader generated";
-					exit;
-				}
+				echo "<pre>";
+				$tmp = $setted;
+				unset($tmp['files']);
+				print_r($tmp);
+				echo "<pre>";
+				exit("ok");
+			}
+			if (self::isInstall(false) and !isset($_GET["minOutput"]))
+			{
+				exit("autloader generated");
 			}
 		}
 		Prof()->startTimer("Autoloader->loadClassLocations");
 		if (!file_exists(self::$autoloadPhpFilePath))
 		{
-			alert(self::$autoloadPhpFilePath . " does not exists");
+			self::error(self::$autoloadPhpFilePath . " does not exists");
 		}
 		require_once self::$autoloadPhpFilePath;
 		Prof()->stopTimer("Autoloader->loadClassLocations");
@@ -238,6 +232,22 @@ class Autoloader
 		return (isset($_GET["generateAutoloader"]));
 	}
 	
+	private static function canDisplay()
+	{
+		if (\AppConfig::isLocalEnv())
+		{
+			return true;
+		}
+		if (\AppConfig::isLiveENV())
+		{
+			return (self::isInstall(false) and !isset($_GET["minOutput"]) and isTestIp());
+		}
+		else
+		{
+			return (self::isInstall(false) and !isset($_GET["minOutput"]));
+		}
+	}
+	
 	private static function loader($className)
 	{
 		Prof()->startTimer("Autoloader->load");
@@ -266,7 +276,7 @@ class Autoloader
 		{
 			if (!file_exists($requireFile))
 			{
-				alert("Autoloader: class '$className file '$requireFile' not found");
+				self::error("Autoloader: class '$className file '$requireFile' not found");
 			}
 			else
 			{
@@ -292,7 +302,7 @@ class Autoloader
 					}
 				}
 			}
-			alert("Autoloader: class '$className' not found");
+			self::error("Autoloader: class '$className' not found");
 		}
 		Prof()->stopTimer("Autoloader->load");
 	}
@@ -310,7 +320,7 @@ class Autoloader
 		{
 			if (isset(self::$includePaths[$dir]))
 			{
-				alert("Path($dir) is already added");
+				self::error("Path($dir) is already added");
 			}
 			self::$includePaths[$dir] = $dir;
 			if ($recursive)
@@ -342,8 +352,13 @@ class Autoloader
 		}
 		else
 		{
-			alert("addIncludePath> $dir is not dir");
+			self::error("addIncludePath> $dir is not dir");
 		}
+	}
+	
+	private static function error($msg)
+	{
+		alert($msg);
 	}
 }
 
