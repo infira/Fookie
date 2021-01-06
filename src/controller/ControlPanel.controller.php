@@ -7,18 +7,38 @@ use Infira\Fookie\facade\File;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\request\Payload;
 use Infira\Fookie\Fookie;
+use Infira\Fookie\KeyData;
 
 class ControlPanel extends \Infira\Fookie\controller\Controller
 {
 	public function __construct()
 	{
-		$this->allowOnlyDevAccess();
+		if (Http::exists('subClass'))
+		{
+			$sc = Http::get('subClass');
+			if ($sc == 'db')
+			{
+				if (in_array(Http::get('task'), ['ormModels', 'ormModelsDownload']))
+				{
+					$this->allowOnlyDevAccess();
+				}
+			}
+			elseif (!in_array($sc, ['updates', 'db']))
+			{
+				$this->allowOnlyDevAccess();
+			}
+		}
+		elseif (!in_array(Http::get('task'), ['generateAssetsVersion']))
+		{
+			$this->allowOnlyDevAccess();
+		}
 		parent::__construct();
 		Prof()->void();
 		$this->showBeforeInstall();
 		ini_set('memory_limit', '400M');
 		Payload::plainOutput();
 	}
+	
 	
 	public function index()
 	{
@@ -66,17 +86,6 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		return Http::existsGET("minOutput");
 	}
 	
-	public function generateAssetsVersion()
-	{
-		$assetsVersion = intval(KeyData::get("assetsVersion")) + 1;
-		KeyData::set("assetsVersion", $assetsVersion);
-		
-		return $assetsVersion . BR;
-	}
-	
-	//------------
-	
-	
 	protected function showBeforeInstall()
 	{
 		if ($this->isMinOutout())
@@ -106,8 +115,6 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		$r  .= $this->getButton("Views", 'db', ['task' => "views"]);
 		$r  .= $this->getButton("Database ORM models", 'db', ['task' => "ormModels"]);
 		$r  .= " | ";
-		
-		$r .= $this->getButton("all", '', ['task' => "all"]);
 		
 		$r .= BR . BR . "Assets" . BR;
 		
@@ -151,6 +158,16 @@ class ControlPanel extends \Infira\Fookie\controller\Controller
 		$link = Route::getLink('/controlpanel/' . $controllerName, $urlParams);
 		
 		return '<button ' . $style . ' type="button" onclick="window.location=\'' . $link . '\'">' . $label . '</button> ';
+	}
+	
+	
+	//######################################################################## Tasks
+	public function generateAssetsVersion()
+	{
+		$assetsVersion = intval(KeyData::get("assetsVersion")) + 1;
+		KeyData::set("assetsVersion", $assetsVersion);
+		
+		return $assetsVersion . BR;
 	}
 }
 

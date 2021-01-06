@@ -18,8 +18,14 @@ class DbInstaller extends Controller
 	
 	public function __construct()
 	{
-		$this->addViewPath(Path::dbViews());
-		$this->dbFiles['triggers'][] = Path::dbTriggers();
+		if (file_exists(Path::dbViews()))
+		{
+			$this->addViewPath(Path::dbViews());
+		}
+		if (file_exists(Path::dbTriggers()))
+		{
+			$this->dbFiles['triggers'][] = Path::dbTriggers();
+		}
 		parent::__construct();
 	}
 	
@@ -48,6 +54,92 @@ class DbInstaller extends Controller
 		{
 			return "task not found";
 		}
+	}
+	
+	private function addViewFile(string $view)
+	{
+		$this->dbFiles['views'][] = $view;
+	}
+	
+	public function voidView(string $view)
+	{
+		$this->voidDbFiles['views'][] = $view;
+	}
+	
+	public function addTriggerFile(string $view)
+	{
+		$this->dbFiles['tiggers'][] = $view;
+	}
+	
+	public function voidTrigger(string $view)
+	{
+		$this->voidDbFiles['tiggers'][] = $view;
+	}
+	
+	private function getFiles(array $files)
+	{
+		$views = [];
+		foreach ($files as $file)
+		{
+			if (is_dir($file))
+			{
+				$views = array_merge($views, Dir::getContents($file, "dummy.txt", false, true));
+			}
+			elseif (is_file($file))
+			{
+				if (!in_array($file, $views))
+				{
+					if (strtolower(File::getExtension($file)) == 'sql')
+					{
+						$views[] = $file;
+					}
+				}
+			}
+			else
+			{
+				alert('File is not file or path(' . $file . ') not found');
+			}
+		}
+		
+		return $views;
+	}
+	
+	//######################################################################## Tasks
+	public function views()
+	{
+		$output = ["Installing views"];
+		foreach ($this->getFiles($this->dbFiles['views']) as $fn)
+		{
+			if (!in_array($fn, $this->voidDbFiles['views']))
+			{
+				Db::fileQuery($fn);
+				$output [] = $fn;
+			}
+		}
+		
+		$output = array_merge($output, $this->triggers());
+		
+		return join("<br />", $output);
+	}
+	
+	public function triggers()
+	{
+		$output = ["Installing triggers"];
+		foreach ($this->getFiles($this->dbFiles['triggers']) as $fn)
+		{
+			if (!in_array($fn, $this->voidDbFiles['triggers']))
+			{
+				$con     = File::getContent($fn);
+				$queries = explode("[TSP]", $con);
+				foreach ($queries as $q)
+				{
+					Db::realQuery($q);
+					$output[] = $fn;
+				}
+			}
+		}
+		
+		return $output;
 	}
 	
 	public function ormModels()
@@ -80,99 +172,6 @@ class DbInstaller extends Controller
 		File::delete($zipFile);
 		exit;
 		
-	}
-	
-	public function addViewFile(string $view)
-	{
-		$this->dbFiles['views'][] = $view;
-	}
-	
-	public function voidView(string $view)
-	{
-		$this->voidDbFiles['views'][] = $view;
-	}
-	
-	public function addTriggerFile(string $view)
-	{
-		$this->dbFiles['tiggers'][] = $view;
-	}
-	
-	
-	public function voidTrigger(string $view)
-	{
-		$this->voidDbFiles['tiggers'][] = $view;
-	}
-	
-	/*
-	 * Set base config
-	 */
-	public function views()
-	{
-		$output = ["Installing views"];
-		foreach ($this->getFiles($this->dbFiles['views']) as $fn)
-		{
-			if (!in_array($fn, $this->voidDbFiles['views']))
-			{
-				Db::fileQuery($fn);
-				$output [] = $fn;
-			}
-		}
-		
-		$output = array_merge($output, $this->triggers());
-		
-		return join("<br />", $output);
-	}
-	
-	public function triggers()
-	{
-		$output        = ["Installing triggers"];
-		$viewFolders   = [];
-		$viewFolders[] = Path::root("db/triggers/");
-		
-		foreach ($this->getFiles($this->dbFiles['triggers']) as $fn)
-		{
-			if (!in_array($fn, $this->voidDbFiles['triggers']))
-			{
-				$con     = File::getContent($fn);
-				$queries = explode("[TSP]", $con);
-				foreach ($queries as $q)
-				{
-					Db::realQuery($q);
-					$output[] = $fn;
-				}
-			}
-		}
-		
-		return $output;
-	}
-	
-	
-	private function getFiles(array $files)
-	{
-		$views = [];
-		foreach ($files as $file)
-		{
-			if (is_dir($file))
-			{
-				$views = array_merge($views, Dir::getContents($file, "dummy.txt", false, true));
-			}
-			elseif (is_file($file))
-			{
-				if (!in_array($file, $views))
-				{
-					if (strtolower(File::getExtension($file)) == 'sql')
-					{
-						$views[] = $file;
-					}
-				}
-			}
-			else
-			{
-				alert('Fiel is not file or path(' . $file . ') not found');
-			}
-		}
-		
-		return $views;
 	}
 }
 
