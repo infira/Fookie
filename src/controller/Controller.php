@@ -48,7 +48,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		}
 		elseif ($this->authRequired === true and !$this->isUserAuthotized())
 		{
-			Payload::setError("auth requierd");
+			$this->onAuthRequired();
 		}
 		elseif ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
 		{
@@ -58,9 +58,9 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		return true;
 	}
 	
-	protected function isUserAuthotized()
+	protected function onAuthRequired()
 	{
-		return true;
+		Payload::setError("auth requierd");
 	}
 	
 	protected final function disAllowUnAuthorisedAccess()
@@ -81,6 +81,8 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	{
 		$this->allowOnlyDevAccess = true;
 	}
+	
+	abstract protected function isUserAuthotized(): bool;
 }
 
 ?>

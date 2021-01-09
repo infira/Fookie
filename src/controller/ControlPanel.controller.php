@@ -9,7 +9,7 @@ use Infira\Fookie\request\Payload;
 use Infira\Fookie\Fookie;
 use Infira\Fookie\KeyData;
 
-class ControlPanel extends \Infira\Fookie\controller\Controller
+class ControlPanel extends Controller
 {
 	public function __construct()
 	{

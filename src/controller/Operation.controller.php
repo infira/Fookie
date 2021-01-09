@@ -5,7 +5,7 @@ namespace Infira\Fookie\controller;
 use Infira\Fookie\facade\Http;
 use AppConfig;
 
-class Operation extends \Infira\Fookie\controller\Controller
+class Operation extends Controller
 {
 	public final function handle($return = false)
 	{
@@ -41,7 +41,7 @@ class Operation extends \Infira\Fookie\controller\Controller
 	{
 		if (Http::getGET("hash") == "asdas89f0sdhgsdg98")
 		{
-			$Mail = new SiteMailer();
+			$Mail = new \KIS\helper\mailer\KIS();
 			if (Http::getGET("email"))
 			{
 				$Mail->addAddress(Http::getGET("email"));
