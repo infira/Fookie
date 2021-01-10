@@ -70,6 +70,8 @@ class CacheFlusher extends Controller
 		
 		return "emailErrorSentCount flushed";
 	}
+	
+	public function isUserAuthotized(): bool { return true; }
 }
 
 ?>

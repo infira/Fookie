@@ -9,7 +9,6 @@ use Infira\Utils\File;
 
 class SystemUpdater extends Controller
 {
-	
 	public function run()
 	{
 		if (!defined("VOID_DB_LOG"))
@@ -126,6 +125,8 @@ class SystemUpdater extends Controller
 		}
 		require_once $file;
 	}
+	
+	public function isUserAuthotized(): bool { return true; }
 }
 
 ?>
