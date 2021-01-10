@@ -13,6 +13,20 @@ class ControlPanel extends Controller
 {
 	public function __construct()
 	{
+		parent::__construct();
+		$this->disAllowUnAuthorisedAccess();
+		Prof()->void();
+		$this->showBeforeInstall();
+		ini_set('memory_limit', '400M');
+		Payload::plainOutput();
+	}
+	
+	protected function isUserAuthotized(): bool
+	{
+		if (\AppConfig::isLocalENV())
+		{
+			return true;
+		}
 		if (Http::exists('subClass'))
 		{
 			$sc = Http::get('subClass');
@@ -20,23 +34,18 @@ class ControlPanel extends Controller
 			{
 				if (in_array(Http::get('task'), ['ormModels', 'ormModelsDownload']))
 				{
-					$this->allowOnlyDevAccess();
+					return false;
 				}
 			}
 			elseif (!in_array($sc, ['updates', 'db']))
 			{
-				$this->allowOnlyDevAccess();
+				return false;
 			}
 		}
 		elseif (!in_array(Http::get('task'), ['generateAssetsVersion']))
 		{
-			$this->allowOnlyDevAccess();
+			return false;
 		}
-		parent::__construct();
-		Prof()->void();
-		$this->showBeforeInstall();
-		ini_set('memory_limit', '400M');
-		Payload::plainOutput();
 	}
 	
 	
@@ -169,6 +178,7 @@ class ControlPanel extends Controller
 		
 		return $assetsVersion . BR;
 	}
+	
 }
 
 ?>

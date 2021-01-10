@@ -29,6 +29,7 @@ class DbInstaller extends Controller
 		parent::__construct();
 	}
 	
+	
 	public function addViewPath(string $path)
 	{
 		if (!is_dir($path))
@@ -172,6 +173,18 @@ class DbInstaller extends Controller
 		File::delete($zipFile);
 		exit;
 		
+	}
+	
+	protected function isUserAuthotized(): bool
+	{
+		if (\AppConfig::isLocalENV())
+		{
+			return true;
+		}
+		if (in_array(\Infira\Fookie\facade\Http::get('task'), ['ormModels', 'ormModelsDownload']))
+		{
+			return false;
+		}
 	}
 }
 
