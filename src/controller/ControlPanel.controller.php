@@ -30,7 +30,7 @@ class ControlPanel extends Controller
 		if (Http::exists('subClass'))
 		{
 			$sc = Http::get('subClass');
-			if ($sc == 'db')
+			if ($sc == 'updates')
 			{
 				if (in_array(Http::get('task'), ['ormModels', 'ormModelsDownload']))
 				{
@@ -46,6 +46,8 @@ class ControlPanel extends Controller
 		{
 			return false;
 		}
+		
+		return true;
 	}
 	
 	

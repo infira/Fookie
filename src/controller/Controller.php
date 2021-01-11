@@ -82,7 +82,10 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		$this->allowOnlyDevAccess = true;
 	}
 	
-	abstract protected function isUserAuthotized(): bool;
+	protected function isUserAuthotized(): bool
+	{
+		return true;
+	}
 }
 
 ?>

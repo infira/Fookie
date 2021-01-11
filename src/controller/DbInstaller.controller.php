@@ -174,18 +174,6 @@ class DbInstaller extends Controller
 		exit;
 		
 	}
-	
-	protected function isUserAuthotized(): bool
-	{
-		if (\AppConfig::isLocalENV())
-		{
-			return true;
-		}
-		if (in_array(\Infira\Fookie\facade\Http::get('task'), ['ormModels', 'ormModelsDownload']))
-		{
-			return false;
-		}
-	}
 }
 
 ?>

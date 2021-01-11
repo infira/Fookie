@@ -305,8 +305,6 @@ class Operation extends Controller
 		$all         = Cache::$Driver->Redis->getItems();
 		debug("redis current usage", formatSize(memory_get_usage() - $startMemory));
 	}
-	
-	public function isUserAuthotized(): bool { return true; }
 }
 
 ?>

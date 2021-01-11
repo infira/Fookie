@@ -125,8 +125,6 @@ class SystemUpdater extends Controller
 		}
 		require_once $file;
 	}
-	
-	public function isUserAuthotized(): bool { return true; }
 }
 
 ?>
