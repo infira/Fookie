@@ -14,7 +14,7 @@ class ControlPanel extends Controller
 	public function __construct()
 	{
 		parent::__construct();
-		$this->disAllowUnAuthorisedAccess();
+		$this->requireAuth(true);
 		Prof()->void();
 		$this->showBeforeInstall();
 		ini_set('memory_limit', '400M');

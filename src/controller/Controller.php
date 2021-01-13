@@ -46,13 +46,13 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		{
 			Payload::setError(get_class($this) . ' __construct must be initialized');
 		}
-		elseif ($this->authRequired === true and !$this->isUserAuthotized())
-		{
-			$this->onAuthRequired();
-		}
 		elseif ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
 		{
 			Payload::setError("oly dev envinronment can access this controller");
+		}
+		elseif ($this->authRequired === true and !$this->isUserAuthotized())
+		{
+			$this->onAuthRequired();
 		}
 		
 		return true;
@@ -63,14 +63,9 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		Payload::setError("auth requierd");
 	}
 	
-	protected final function disAllowUnAuthorisedAccess()
+	public final function requireAuth(bool $require)
 	{
-		$this->authRequired = true;
-	}
-	
-	protected final function allowUnAuthorisedAccess()
-	{
-		$this->authRequired = false;
+		$this->authRequired = $require;
 	}
 	
 	
@@ -84,7 +79,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	
 	protected function isUserAuthotized(): bool
 	{
-		return true;
+		return false;
 	}
 }
 
