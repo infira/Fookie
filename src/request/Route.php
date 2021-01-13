@@ -8,6 +8,7 @@ use Path;
 use Infira\Fookie\facade\Variable;
 use \Infira\Fookie\facade\Session;
 use Infira\Fookie\Fookie;
+use stdClass;
 
 class Route
 {
@@ -84,7 +85,7 @@ class Route
 		{
 			foreach ($routes as $role => $Route)
 			{
-				$target       = new \stdClass();
+				$target       = new stdClass();
 				$target->role = $roleName;
 				if (is_string($Route->controller))
 				{
@@ -162,7 +163,7 @@ class Route
 				Http::setGET($key, $val);
 			}
 			
-			$match->extra = new \stdClass();
+			$match->extra = new stdClass();
 			if (strpos($match->target->controller, '[') !== false)
 			{
 				$getNameFrom               = str_replace(['[', ']'], '', $match->target->controller);
@@ -302,7 +303,7 @@ class Route
 		return self::$RouteNode->role;
 	}
 	
-	public static function isRole(string $checkRole)
+	public static function isRole(string $checkRole): bool
 	{
 		return self::$RouteNode->role == $checkRole;
 	}
@@ -312,9 +313,9 @@ class Route
 		return self::$RouteNode->controller;
 	}
 	
-	public static function getControllerMethod()
+	public static function getControllerMethod(): string
 	{
-		return self::$RouteNode->method;
+		return self::$RouteNode->controllerMethod;
 	}
 	
 	/**
