@@ -14,6 +14,12 @@ use Infira\Fookie\facade\Cache;
 
 class CacheFlusher extends Controller
 {
+	public function __construct()
+	{
+		parent::__construct();
+		$this->requireAuth(false);
+	}
+	
 	public function run()
 	{
 		if (!defined("VOID_DB_LOG"))
@@ -36,7 +42,7 @@ class CacheFlusher extends Controller
 	{
 		$output = '';
 		$output .= $this->flushCache() . BR;
-		$output .= $this->flushCompiledTemplates() . BR;
+		$output .= $this->flushCompiledSmartyTemplates() . BR;
 		
 		return $output . "all flushed";
 	}
@@ -56,19 +62,12 @@ class CacheFlusher extends Controller
 		return "cache flushed";
 	}
 	
-	public function flushCompiledTemplates()
+	public function flushCompiledSmartyTemplates()
 	{
 		$this->View->clearAllCache();
 		$this->View->clearCompiledTemplate();
 		
-		return "templates flushed";
-	}
-	
-	public function flushEmailErrorCounter()
-	{
-		Dir::flush(Path::temp("emailErrorSentCount/"));
-		
-		return "emailErrorSentCount flushed";
+		return "smarty templates flushed";
 	}
 }
 

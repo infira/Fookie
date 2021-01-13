@@ -139,8 +139,7 @@ class ControlPanel extends Controller
 		$r .= $this->getButton("flushAssets", 'flusher', ['task' => "flushAssets"]);
 		
 		$r .= $this->getButton("flushCache", 'flusher', ['task' => "flushCache"]);
-		$r .= $this->getButton("flushCompiledTemplates", 'flusher', ['task' => "flushCompiledTemplates"]);
-		$r .= $this->getButton("flush email erroir counter", 'flusher', ['task' => "flushEmailErrorCounter"]);
+		$r .= $this->getButton("flushCompiled SmartyTemplates", 'flusher', ['task' => "flushCompiledSmartyTemplates"]);
 		
 		
 		echo $r . BR . BR . BR;
