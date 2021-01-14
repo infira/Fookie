@@ -7,13 +7,13 @@ use Infira\Fookie\facade\Http;
 
 class Payload
 {
-	private static $data            = [];
-	private static $plainPoutput    = false;
-	private static $plainJsonOutput = false;
+	private static $data         = null;
+	private static $plainPoutput = false;
+	private static $outputsJSON  = false;
 	
 	public static function init()
 	{
-		self::$data = ["payloadQuery" => "", "payload" => []];
+		self::$data = ["payload" => null];
 	}
 	
 	public static function setField($name, $value)
@@ -76,6 +76,7 @@ class Payload
 	public static function setJSONHeader()
 	{
 		self::setHeader('Content-Type: application/json');
+		self::$outputsJSON = true;
 	}
 	
 	public static function setHeader($header)
@@ -105,48 +106,55 @@ class Payload
 		self::$plainPoutput = true;
 	}
 	
-	public static function plainJsonOutput()
-	{
-		self::setJSONHeader();
-		self::$plainJsonOutput = true;
-	}
-	
 	public static function getOutput(): string
 	{
 		if (AppConfig::isDevENV())
 		{
 			self::setField('repLink', str_replace('_sr', '_rr', Http::getCurrentUrl()));
 		}
+		
+		
 		if (self::$plainPoutput)
 		{
 			if (self::haveError())
 			{
-				return pre(dump(self::$data));
+				$output = self::$data['error'];
 			}
-			
-			return self::$data['payload'];
-		}
-		elseif (self::$plainJsonOutput)
-		{
-			if (self::haveError())
+			else
 			{
-				$err = self::$data['error'];
-				$err = strip_tags($err, '<br>');
-				
-				return $err;
+				$output = self::$data['payload'];
 			}
-			
-			return json_encode(self::$data['payload']);
 		}
 		else
 		{
-			if (Http::acceptJSON())
-			{
-				return json_encode(self::$data);
-			}
-			
-			return pre(dump(self::$data));
+			$output = self::$data;
 		}
+		if (Http::acceptJSON() or self::$outputsJSON)
+		{
+			self::setJSONHeader();
+			if (self::haveError())
+			{
+				if (self::$plainPoutput)
+				{
+					$output = strip_tags($output, '<br>');
+				}
+				else
+				{
+					$output['error'] = strip_tags($output['error'], '<br>');
+				}
+			}
+		}
+		
+		if (self::$outputsJSON)
+		{
+			return json_encode($output);
+		}
+		if (self::$plainPoutput)
+		{
+			return $output;
+		}
+		
+		return pre(dump($output));
 	}
 }
 

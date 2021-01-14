@@ -185,39 +185,46 @@ class Route
 	public static function boot()
 	{
 		$controllerMethodArguments = [];
-		
-		if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $_SERVER["CONTENT_TYPE"]))
+		$contentType               = '';
+		if (isset($_SERVER["CONTENT_TYPE"]) and preg_match('%application/json%', $_SERVER["CONTENT_TYPE"]))
 		{
-			$requestPayload = json_decode(file_get_contents("php://input", false, stream_context_get_default(), 0, $_SERVER["CONTENT_LENGTH"]));
-			
-			$requestPayload = Variable::apply((object)[], $requestPayload, ["ajaxMethodArguments" => null]);
-			
-			if (property_exists($requestPayload, 'parseRequestAsPost'))
+			$contentType = $_SERVER["CONTENT_TYPE"];
+		}
+		if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $contentType))
+		{
+			if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $contentType))
 			{
-				alert("Do not use parseRequestAsPost");
-				unset($requestPayload->parseRequestAsPost);
-			}
-			
-			if ($requestPayload->ajaxMethodArguments)
-			{
-				$controllerMethodArguments = $requestPayload->ajaxMethodArguments;
-			}
-			unset($requestPayload->ajaxMethodArguments);
-			
-			foreach ((array)$requestPayload as $name => $val)
-			{
-				Http::setPOST($name, $val);
-			}
-			if (Http::existsPOST("ajaxMethodArguments"))
-			{
-				$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
-			}
-			
-			if (Http::existsGET('_sr') and AppConfig::isDevENV())
-			{
-				$sr = Http::getGET('_sr');
-				Session::set("savedPost-$sr", Http::getPOST());
-				Session::set("saveControllerMethodArguments-$sr", $controllerMethodArguments);
+				$requestPayload = json_decode(file_get_contents("php://input", false, stream_context_get_default(), 0, $_SERVER["CONTENT_LENGTH"]));
+				
+				$requestPayload = Variable::apply((object)[], $requestPayload, ["ajaxMethodArguments" => null]);
+				
+				if (property_exists($requestPayload, 'parseRequestAsPost'))
+				{
+					alert("Do not use parseRequestAsPost");
+					unset($requestPayload->parseRequestAsPost);
+				}
+				
+				if ($requestPayload->ajaxMethodArguments)
+				{
+					$controllerMethodArguments = $requestPayload->ajaxMethodArguments;
+				}
+				unset($requestPayload->ajaxMethodArguments);
+				
+				foreach ((array)$requestPayload as $name => $val)
+				{
+					Http::setPOST($name, $val);
+				}
+				if (Http::existsPOST("ajaxMethodArguments"))
+				{
+					$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
+				}
+				
+				if (Http::existsGET('_sr') and AppConfig::isDevENV())
+				{
+					$sr = Http::getGET('_sr');
+					Session::set("savedPost-$sr", Http::getPOST());
+					Session::set("saveControllerMethodArguments-$sr", $controllerMethodArguments);
+				}
 			}
 		}
 		
