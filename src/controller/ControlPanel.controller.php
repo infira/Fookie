@@ -25,7 +25,7 @@ class ControlPanel extends Controller
 	{
 		if (\AppConfig::isLocalENV())
 		{
-			//return TRUE;
+			return TRUE;
 		}
 		if (Http::exists('subClass'))
 		{
