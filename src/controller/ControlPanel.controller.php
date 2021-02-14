@@ -14,7 +14,7 @@ class ControlPanel extends Controller
 	public function __construct()
 	{
 		parent::__construct();
-		$this->requireAuth(true);
+		$this->requireAuth(TRUE);
 		Prof()->void();
 		$this->showBeforeInstall();
 		ini_set('memory_limit', '400M');
@@ -25,7 +25,7 @@ class ControlPanel extends Controller
 	{
 		if (\AppConfig::isLocalENV())
 		{
-			return true;
+			return TRUE;
 		}
 		if (Http::exists('subClass'))
 		{
@@ -34,20 +34,20 @@ class ControlPanel extends Controller
 			{
 				if (in_array(Http::get('task'), ['ormModels', 'ormModelsDownload']))
 				{
-					return false;
+					return FALSE;
 				}
 			}
 			elseif (!in_array($sc, ['updates', 'db']))
 			{
-				return false;
+				return FALSE;
 			}
 		}
-		elseif (!in_array(Http::get('task'), ['generateAssetsVersion']))
+		elseif (!in_array(Http::get('task'), ['generateAssetsVersion', 'flushAll', 'flushAssets', 'flushCache', 'flushCompiledSmartyTemplates']))
 		{
-			return false;
+			return FALSE;
 		}
 		
-		return true;
+		return TRUE;
 	}
 	
 	
@@ -101,7 +101,7 @@ class ControlPanel extends Controller
 	{
 		if ($this->isMinOutout())
 		{
-			return true;
+			return TRUE;
 		}
 		$r = "";
 		if (Http::existsGET("isAll"))
@@ -148,18 +148,18 @@ class ControlPanel extends Controller
 	private function getButton($label, $controllerName, $urlParams = [])
 	{
 		$style = "";
-		$ok    = true;
+		$ok    = TRUE;
 		foreach ($urlParams as $key => $val)
 		{
 			if (Http::getGET($key) != $val)
 			{
-				$ok = false;
+				$ok = FALSE;
 				break;
 			}
 		}
 		if ($controllerName != Http::getGET('subClass'))
 		{
-			$ok = false;
+			$ok = FALSE;
 		}
 		if ($ok)
 		{
