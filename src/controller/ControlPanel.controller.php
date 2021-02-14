@@ -25,26 +25,16 @@ class ControlPanel extends Controller
 	{
 		if (\AppConfig::isLocalENV())
 		{
-			return TRUE;
+			//return TRUE;
 		}
 		if (Http::exists('subClass'))
 		{
 			$sc = Http::get('subClass');
-			if ($sc == 'updates')
-			{
-				if (in_array(Http::get('task'), ['ormModels', 'ormModelsDownload']))
-				{
-					return FALSE;
-				}
-			}
-			elseif (!in_array($sc, ['updates', 'db']))
+			//debug(['SubClass' => $sc]);
+			if ($sc == 'db' and in_array(Http::get('task'), ['ormModels', 'ormModelsDownload']))
 			{
 				return FALSE;
 			}
-		}
-		elseif (!in_array(Http::get('task'), ['generateAssetsVersion', 'flushAll', 'flushAssets', 'flushCache', 'flushCompiledSmartyTemplates']))
-		{
-			return FALSE;
 		}
 		
 		return TRUE;
@@ -135,8 +125,6 @@ class ControlPanel extends Controller
 		
 		$r .= $this->getButton("flushAll", 'flusher', ['task' => "flushAll"]);
 		$r .= " | ";
-		
-		$r .= $this->getButton("flushAssets", 'flusher', ['task' => "flushAssets"]);
 		
 		$r .= $this->getButton("flushCache", 'flusher', ['task' => "flushCache"]);
 		$r .= $this->getButton("flushCompiled SmartyTemplates", 'flusher', ['task' => "flushCompiledSmartyTemplates"]);

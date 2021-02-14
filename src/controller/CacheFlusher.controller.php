@@ -17,14 +17,14 @@ class CacheFlusher extends Controller
 	public function __construct()
 	{
 		parent::__construct();
-		$this->requireAuth(false);
+		$this->requireAuth(FALSE);
 	}
 	
 	public function run()
 	{
 		if (!defined("VOID_DB_LOG"))
 		{
-			define("VOID_DB_LOG", true);
+			define("VOID_DB_LOG", TRUE);
 		}
 		set_time_limit(7200);
 		$installName = Http::getGet('task');
@@ -64,8 +64,8 @@ class CacheFlusher extends Controller
 	
 	public function flushCompiledSmartyTemplates()
 	{
-		$this->View->clearAllCache();
-		$this->View->clearCompiledTemplate();
+		\Tpl::Smarty()->clearAllCache();
+		\Tpl::Smarty()->clearCompiledTemplate();
 		
 		return "smarty templates flushed";
 	}
