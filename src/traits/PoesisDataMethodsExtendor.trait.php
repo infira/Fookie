@@ -56,12 +56,12 @@ trait PoesisDataMethodsExtendor
 				$this->loop("fetch_row", function ($row) use (&$newArray)
 				{
 					$newArray[] = $row;
-				});
+				}, null, false);
 			}
 			else
 			{
 				$addFields = array_merge([$key, $v], $extraFields);
-				$this->loop("fetch_object", function ($row) use (&$newArray, &$addFields)
+				$this->each(function ($row) use (&$newArray, &$addFields)
 				{
 					$addArr = [];
 					foreach ($addFields as $n)
@@ -75,7 +75,7 @@ trait PoesisDataMethodsExtendor
 		}
 		else
 		{
-			$this->loop("fetch_object", function ($row) use (&$newArray, &$key, &$v)
+			$this->each(function ($row) use (&$newArray, &$key, &$v)
 			{
 				$newArray[Variable::toString($row->$key)] = $row->$v;
 			});

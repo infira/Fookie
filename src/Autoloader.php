@@ -3,16 +3,17 @@
 namespace Infira\fookie;
 
 use Path;
+use File;
+use Infira\Utils\Regex;
 
 class Autoloader
 {
 	private static $namespaces = [];
-	private static $interfaces = [];
 	private static $traits     = [];
 	private static $classes    = [];
 	
 	
-	private static $includePaths                = [];
+	private static $settedIncludePaths          = [];
 	private static $customClassess              = [];
 	private static $installPathsMethod;
 	private static $autoloadPhpFilePath;
@@ -20,6 +21,10 @@ class Autoloader
 	private static $voidClassPatternOnNotExists = [];
 	
 	private static $isInited = false;
+	
+	private static $collectedFiles     = [];
+	private static $allCollectedFiles  = [];
+	private static $phpAutoloadFileStr = '';
 	
 	public static function init()
 	{
@@ -39,6 +44,7 @@ class Autoloader
 			self::error("TEMP path for installing autoloader is not writable");
 		}
 		
+		
 		if (self::isInstall(true))
 		{
 			if (self::canDisplay())
@@ -46,28 +52,28 @@ class Autoloader
 				$r = '<button type="button" onclick="window.location=\'/controlpanel/\'">Go to control panel</button>';
 				echo $r;
 			}
+			
+			self::$allCollectedFiles  = [];
+			self::$collectedFiles     = [];
+			self::$phpAutoloadFileStr = '<?php' . "\n";
 			if (is_callable(self::$installPathsMethod))
 			{
 				$installPaths   = [];
 				$installPaths[] = [Path::app(), true];
-				$installPaths[] = ['ns:Infira\Fookie', Path::fookie()];
-				$installPaths[] = ['ns:Infira\Fookie\facade', Path::fookie('facade/')];
-				$installPaths[] = ['ns:Infira\Fookie\request', Path::fookie('request/')];
-				$installPaths[] = ['ns:Infira\Fookie\controller', Path::fookie('controller/')];
+				$installPaths[] = [Path::fookie(), true];
 				$installPaths   = array_merge($installPaths, callback(self::$installPathsMethod));
-				foreach ($installPaths as $path)
+				foreach ($installPaths as $install)
 				{
-					if (substr($path[0], 0, 3) == 'ns:')
+					if (substr($install[0], 0, 3) == 'ns:')
 					{
-						$dir = $path[1];
+						$dir = $install[1];
 						if (!is_dir($dir))
 						{
 							self::error($dir . ' is not a dir');
 						}
-						$namespace = substr($path[0], 3);
-						
-						$dir = trim($dir);
-						$dir = Path::fix($dir);
+						$namespace = substr($install[0], 3);
+						$dir       = trim($dir);
+						$dir       = Path::fix($dir);
 						if (is_dir($dir))
 						{
 							$handler = scandir($dir);
@@ -80,23 +86,17 @@ class Autoloader
 										$f = $dir . $nDir;
 										if (is_file($f))
 										{
-											$cn = str_replace(['.class', '.trait', '.controller', '.interface'], '', pathinfo($f)['filename']);
-											$cn = str_replace('.controller', '', $cn);
-											$ns = $namespace . '\\' . $cn;
+											$pi = pathinfo($f);
+											$ns = $namespace . '\\' . explodeAt('.', $pi['filename'], 0);
 											if ($ns{(strlen($ns) - 1)} == '\\')
 											{
 												$ns = substr($ns, 0, -1);
 											}
-											$pi = pathinfo($f);
 											if (isset($pi['extension']))
 											{
 												if ($pi['extension'] == 'php')
 												{
-													if (isset(self::$namespaces[$ns]))
-													{
-														self::error("Namespaces($ns) is already added");
-													}
-													self::$namespaces[$ns] = $f;
+													self::collect('namespaces', $ns, $f);
 												}
 											}
 										}
@@ -106,84 +106,32 @@ class Autoloader
 						}
 						else
 						{
-							self::error("addIncludePath > $dir is not dir");
+							self::error("init > $dir is not dir");
 						}
 					}
 					else
 					{
-						$dir = $path[0];
+						$dir = $install[0];
 						if (!is_dir($dir))
 						{
 							self::error($dir . ' is not a dir');
 						}
-						self::addIncludePath($path[0], $path[1]);
+						self::addIncludePath($dir, $install[1]);
 					}
 				}
 			}
 			
-			
-			$phpAutoloadFileStr = '<?php' . "\n";
-			
-			$setted = [];
-			
-			$add = function ($type, $name, $file) use (&$setted, &$phpAutoloadFileStr)
-			{
-				$setNames              = [];
-				$setNames['class']     = 'classes';
-				$setNames['trait']     = 'traits';
-				$setNames['interface'] = 'interfaces';
-				$setName               = $setNames[$type];
-				$name                  = str_replace('.' . $type . '.php', '', $name);
-				if (isset($setted[$setName][$name]))
-				{
-					$msg = 'Cant define autoloader class(' . $name . ') twice = ' . $file . BR;
-					$msg .= 'Previousliy declared: ' . $setted[$setName][$name];
-					$this->error($msg);
-				}
-				$phpAutoloadFileStr      .= 'self::$' . $setName . '[\'' . $name . '\'] = \'' . $file . '\';' . "\n";
-				$setted[$setName][$name] = $file;
-			};
-			
-			foreach (self::$includePaths as $path)
-			{
-				foreach (glob($path . "*.php") as $file)
-				{
-					$basename                   = basename($file);
-					$setted['files'][$basename] = str_replace(Path::root(), '', $file);
-					if (strpos($basename, '.class') !== false)
-					{
-						$add('class', $basename, $file);
-					}
-					elseif (strpos($basename, '.int') !== false)
-					{
-						$add('interface', $basename, $file);
-					}
-					elseif (strpos($basename, '.trait') !== false)
-					{
-						$add('trait', $basename, $file);
-					}
-				}
-			}
-			foreach (self::$namespaces as $nsClass => $path)
-			{
-				$setted['namespaces'][$nsClass] = $path;
-				$phpAutoloadFileStr             .= 'self::$namespaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
-			}
-			foreach (self::$interfaces as $nsClass => $path)
-			{
-				$setted['interfaces'][$nsClass] = $path;
-				$phpAutoloadFileStr             .= 'self::$interfaces[\'' . $nsClass . '\'] = \'' . $path . '\';' . "\n";
-			}
 			foreach (self::$customClassess as $class => $path)
 			{
-				$add('class', $class, $path);
+				self::collect('classes', $class, $path);
 			}
-			$phpAutoloadFileStr .= "\n" . '?>';
-			file_put_contents(self::$autoloadPhpFilePath, trim($phpAutoloadFileStr));
+			
+			self::$phpAutoloadFileStr .= "\n" . '?>';
+			file_put_contents(self::$autoloadPhpFilePath, trim(self::$phpAutoloadFileStr));
 			if (self::canDisplay())
 			{
 				echo "<pre>";
-				$tmp = $setted;
+				$tmp = self::$collectedFiles;
 				unset($tmp['files']);
 				print_r($tmp);
 				echo "<pre>";
@@ -312,17 +260,84 @@ class Autoloader
 		self::$customClassess[$className] = $classFileLocation;
 	}
 	
+	public static function collect($type, $name, $file)
+	{
+		if (!isset(self::$allCollectedFiles[$file]))
+		{
+			$name = explodeAt('.', basename($name), 0);
+			if (!in_array($type, ['classes', 'classes2', 'interfaces', 'traits', 'files', 'namespaces']))
+			{
+				//self::error('Unknown collect type');
+			}
+			if (isset(self::$collectedFiles[$type][$name]))
+			{
+				$msg = BR . 'Cant define autoloader class(' . $name . '),type(' . $type . ') twice = ' . $file . BR;
+				$msg .= 'Previousliy declared: <pre>' . dump(self::$collectedFiles[$type]) . '</pre>';
+				//exit($msg);
+			}
+			self::$phpAutoloadFileStr           .= 'self::$' . $type . '[\'' . $name . '\'] = \'' . $file . '\';' . "\n";
+			self::$collectedFiles[$type][$name] = $file;
+			
+			self::$allCollectedFiles[$file] = true;
+		}
+	}
+	
+	
 	private static function addIncludePath($dir, $recursive = false)
 	{
 		$dir = trim($dir);
 		$dir = Path::fix($dir);
 		if (is_dir($dir))
 		{
-			if (isset(self::$includePaths[$dir]))
+			if (isset(self::$settedIncludePaths[$dir]))
 			{
 				self::error("Path($dir) is already added");
 			}
-			self::$includePaths[$dir] = $dir;
+			self::$settedIncludePaths[$dir] = $dir;
+			foreach (glob($dir . "*.php") as $file)
+			{
+				$basename = basename($file);
+				$src      = file_get_contents($file);
+				if (Regex::isMatch('/namespace (.+)?;/m', $src))
+				{
+					$matches = [];
+					preg_match_all('/namespace (.+)?;/m', $src, $matches);
+					self::collect('namespaces', $matches[1][0] . '\\' . $basename, $file);
+				}
+				else
+				{
+					if (Regex::isMatch('/^class ([[A-Za-z0-9_]+)/m', $src))
+					{
+						$matches = [];
+						preg_match_all('/^class ([[A-Za-z0-9_]+)/m', $src, $matches);
+						self::collect('classes', $matches[1][0], $file);
+					}
+					elseif (Regex::isMatch('/^trait ([[A-Za-z0-9_]+)/m', $src))
+					{
+						$matches = [];
+						preg_match_all('/^trait ([[A-Za-z0-9_]+)/m', $src, $matches);
+						self::collect('traits', $matches[1][0], $file);
+					}
+				}
+				
+				
+				if (strpos($basename, '.class') !== false)
+				{
+					self::collect('classes', $basename, $file);
+				}
+				elseif (strpos($basename, '.int') !== false)
+				{
+					self::collect('interfaces', $basename, $file);
+				}
+				elseif (strpos($basename, '.trait') !== false)
+				{
+					self::collect('traits', $basename, $file);
+				}
+				else
+				{
+					//self::collect('files', $basename, $file);
+				}
+			}
 			if ($recursive)
 			{
 				$handler = scandir($dir);

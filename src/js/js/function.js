@@ -288,10 +288,6 @@ Function.prototype.eBind            = function (obj, args, appendArgs)
 		return fn.apply(obj || window, callArgs);
 	};
 };
-var test                            = function (a)
-{
-	console.log(a);
-}
 Function.prototype.pass             = function ()
 {
 	var args = arguments,

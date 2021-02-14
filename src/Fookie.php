@@ -2,15 +2,18 @@
 
 namespace Infira\Fookie;
 
-use Infira\Poesis\DbQueryHistory;
+use Infira\Poesis\QueryHistory;
 use Infira\Fookie\facade\Session;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\request\Payload;
-use Infira\Fookie\facade\Http;
+use Infira\Utils\Http;
 use Infira\Fookie\facade\Cache;
 use Infira\Poesis\Poesis;
 use Path;
 use App;
+use Infira\Poesis\ConnectionManager;
+use Infira\Cachly\options\DbDriverOptions;
+use AppConfig;
 
 class Fookie
 {
@@ -29,7 +32,7 @@ class Fookie
 		Poesis::init();
 		\Infira\Poesis\Autoloader::setDataGettersExtendorPath(Path::fookieTraits('PoesisDataMethodsExtendor.trait.php'));
 		
-		\AppConfig::finalize();
+		AppConfig::finalize();
 		
 		Poesis::setDefaultConnection(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 		Poesis::useInfiraErrorHadler();
@@ -66,7 +69,13 @@ class Fookie
 		}
 		Session::init($sessionName);
 		Cache::init();
-		Cache::setDefaultDriver(\AppConfig::defaultCacheDriver());
+		Cache::setDefaultDriver(AppConfig::defaultCacheDriver());
+		Cache::setCacheKeyPrefix(AppConfig::getENV());
+		
+		$dbOptons         = new DbDriverOptions();
+		$dbOptons->client = ConnectionManager::default()->getMysqli();
+		Cache::configureDb($dbOptons);
+		
 		Payload::init();
 		self::beforeRouteBoot();
 		Route::boot();
@@ -75,7 +84,7 @@ class Fookie
 		{
 			$payload .= '<pre></pre><div class="_profiler">';
 			$payload .= Prof()->dumpTimers();
-			$payload .= DbQueryHistory::getHTMLTable();
+			$payload .= QueryHistory::getHTMLTable();
 			$payload .= '</div></pre>';
 		}
 		
@@ -87,6 +96,11 @@ class Fookie
 	public static function setDbInstallerController(string $controller)
 	{
 		self::$options['dbInstallerController'] = $controller;
+	}
+	
+	public static function setSystemUpdaterController(string $controller)
+	{
+		self::$options['systemController'] = $controller;
 	}
 	
 	public static function setCacheFlusherController(string $controller)

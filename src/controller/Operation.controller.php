@@ -2,7 +2,7 @@
 
 namespace Infira\Fookie\controller;
 
-use Infira\Fookie\facade\Http;
+use Infira\Utils\Http;
 use AppConfig;
 
 class Operation extends Controller
@@ -75,7 +75,7 @@ class Operation extends Controller
 			$logRowID = Http::getGET("ID");
 			if ($logRowID == "last")
 			{
-				$Db->order("ID DESC");
+				$Db->orderBy("ID DESC");
 				$Db->limit(1);
 			}
 			else
@@ -104,7 +104,7 @@ class Operation extends Controller
 		{
 			$Db  = DbLog::Db();
 			$dir = (in_array(Variable::toLower(Http::getGET("dir")), ["asc", "desc"])) ? Http::getGET("dir") : "asc";
-			$Db->order("ID $dir");
+			$Db->orderBy("ID $dir");
 			$whereFields = ["ID", "tableName", "tableRowID", "eventName", "userID", "url"];
 			foreach ($whereFields as $field)
 			{

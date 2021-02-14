@@ -2,13 +2,13 @@
 
 namespace Infira\Fookie\request;
 
-use Infira\Fookie\facade\Http;
+use Infira\Utils\Http;
 use AppConfig;
 use Path;
 use Infira\Fookie\facade\Variable;
-use \Infira\Fookie\facade\Session;
 use Infira\Fookie\Fookie;
 use stdClass;
+use Infira\Fookie\facade\Db;
 
 class Route
 {
@@ -219,23 +219,29 @@ class Route
 					$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
 				}
 				
-				if (Http::existsGET('_sr') and AppConfig::isDevENV())
+				if (Http::existsGET('_rid'))
 				{
-					$sr = Http::getGET('_sr');
-					Session::set("savedPost-$sr", Http::getPOST());
-					Session::set("saveControllerMethodArguments-$sr", $controllerMethodArguments);
+					$Db = Db::TSavedRequest();
+					$Db->ID(Http::getGET('_rid'));
+					$Db->methodArguments->serialize($controllerMethodArguments);
+					$Db->post->serialize(Http::getPOST());
+					$Db->method($_SERVER['REQUEST_METHOD']);
+					$Db->uri($_SERVER['REQUEST_URI']);
+					$Db->insert();
 				}
 			}
 		}
 		
 		
-		if (Http::existsGET('_rr') and AppConfig::isDevENV())
+		if (Http::existsGET('_rrid'))
 		{
-			$rr                        = Http::getGET('_rr');
-			$post                      = Session::get("savedPost-$rr", Http::getPOST());
-			$controllerMethodArguments = Session::get("saveControllerMethodArguments-$rr", $controllerMethodArguments);
+			$Db = Db::TSavedRequest();
+			$Db->ID(Http::getGET('_rrid'));
+			$req                       = $Db->select()->getObject();
+			$controllerMethodArguments = unserialize($req->methodArguments);
+			$post                      = unserialize($req->post);
 			Http::flushPOST((is_array($post) ? $post : []));
-			$_SERVER['REQUEST_METHOD'] = 'post';
+			$_SERVER['REQUEST_METHOD'] = $req->method;
 		}
 		
 		if (!is_array($controllerMethodArguments))
@@ -411,12 +417,12 @@ class Route
 	
 	public static function getFullLink(string $pathOrName = '', $params = null)
 	{
-		return Path::root(self::getLink($pathOrName, $params), true);
+		return Path::root(substr(self::getLink($pathOrName, $params), 1), true);
 	}
 	
 	public static function go(string $pathOrName = '', $params = null)
 	{
-		if (isAjaxRequest())
+		if (Http::isAjax())
 		{
 			addExtraErrorInfo("goToPage", getTrace());
 			alert("Cant redirect on ajax");

@@ -3,7 +3,7 @@
 namespace Infira\Fookie\controller;
 
 use Infira\Utils\ClassFarm;
-use Infira\Fookie\facade\Http;
+use Infira\Utils\Http;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\facade\Session;
 use AppConfig;
@@ -31,7 +31,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		{
 			debug(Session::get());
 		}
-		if (!isAjaxRequest() && Http::existsGET("showRoute"))
+		if (!Http::isAjax() && Http::existsGET("showRoute"))
 		{
 			debug(Route::getName());
 		}

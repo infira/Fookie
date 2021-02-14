@@ -24,19 +24,9 @@ class DbInstaller extends Controller
 		}
 		if (file_exists(Path::dbTriggers()))
 		{
-			$this->dbFiles['triggers'][] = Path::dbTriggers();
+			$this->addTriggerPath(Path::dbTriggers());
 		}
 		parent::__construct();
-	}
-	
-	
-	public function addViewPath(string $path)
-	{
-		if (!is_dir($path))
-		{
-			alert("Must be corret path($path)");
-		}
-		$this->dbFiles['views'][] = $path;
 	}
 	
 	public function run()
@@ -57,9 +47,22 @@ class DbInstaller extends Controller
 		}
 	}
 	
-	private function addViewFile(string $view)
+	public function addViewPath(string $path)
 	{
-		$this->dbFiles['views'][] = $view;
+		if (!is_dir($path))
+		{
+			alert("Must be corret path($path)");
+		}
+		$this->addFiles([$path], 'views');
+	}
+	
+	public function addViewFile(string $view)
+	{
+		if (!file_exists($view))
+		{
+			alert("View($view) does not exists");
+		}
+		$this->addFiles([$view], 'views');
 	}
 	
 	public function voidView(string $view)
@@ -67,9 +70,22 @@ class DbInstaller extends Controller
 		$this->voidDbFiles['views'][] = $view;
 	}
 	
+	public function addTriggerPath(string $path)
+	{
+		if (!is_dir($path))
+		{
+			alert("Must be corret path($path)");
+		}
+		$this->addFiles([$path], 'triggers');
+	}
+	
 	public function addTriggerFile(string $view)
 	{
-		$this->dbFiles['tiggers'][] = $view;
+		if (!file_exists($view))
+		{
+			alert("View($view) does not exists");
+		}
+		$this->addFiles([$view], 'tiggers');
 	}
 	
 	public function voidTrigger(string $view)
@@ -77,22 +93,21 @@ class DbInstaller extends Controller
 		$this->voidDbFiles['tiggers'][] = $view;
 	}
 	
-	private function getFiles(array $files)
+	private function addFiles(array $files, $to)
 	{
-		$views = [];
 		foreach ($files as $file)
 		{
 			if (is_dir($file))
 			{
-				$views = array_merge($views, Dir::getContents($file, "dummy.txt", false, true));
+				$this->addFiles(Dir::getContents($file, "dummy.txt", false, true), $to);
 			}
 			elseif (is_file($file))
 			{
-				if (!in_array($file, $views))
+				if (!in_array($file, $this->dbFiles[$to]))
 				{
 					if (strtolower(File::getExtension($file)) == 'sql')
 					{
-						$views[] = $file;
+						$this->dbFiles[$to][] = $file;
 					}
 				}
 			}
@@ -101,15 +116,13 @@ class DbInstaller extends Controller
 				alert('File is not file or path(' . $file . ') not found');
 			}
 		}
-		
-		return $views;
 	}
 	
 	//######################################################################## Tasks
 	public function views()
 	{
 		$output = ["Installing views"];
-		foreach ($this->getFiles($this->dbFiles['views']) as $fn)
+		foreach ($this->dbFiles['views'] as $fn)
 		{
 			if (!in_array($fn, $this->voidDbFiles['views']))
 			{
@@ -117,7 +130,6 @@ class DbInstaller extends Controller
 				$output [] = $fn;
 			}
 		}
-		
 		$output = array_merge($output, $this->triggers());
 		
 		return join("<br />", $output);
@@ -126,7 +138,7 @@ class DbInstaller extends Controller
 	public function triggers()
 	{
 		$output = ["Installing triggers"];
-		foreach ($this->getFiles($this->dbFiles['triggers']) as $fn)
+		foreach ($this->dbFiles['triggers'] as $fn)
 		{
 			if (!in_array($fn, $this->voidDbFiles['triggers']))
 			{

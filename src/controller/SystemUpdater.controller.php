@@ -6,9 +6,17 @@ use Http;
 use Db;
 use Path;
 use Infira\Utils\File;
+use Infira\Fookie\facade\Variable;
 
 class SystemUpdater extends Controller
 {
+	private $vars = [];
+	
+	public function addVar(string $name, $value)
+	{
+		$this->vars[$name] = $value;
+	}
+	
 	public function run()
 	{
 		if (!defined("VOID_DB_LOG"))
@@ -80,6 +88,7 @@ class SystemUpdater extends Controller
 				}
 				if ($ok === true)
 				{
+					$sql = Variable::assign($this->vars, $sql);
 					debug($sql);
 					$Db            = Db::TSqlUpdates();
 					$Db->updateNr  = $updateNr;
@@ -109,7 +118,7 @@ class SystemUpdater extends Controller
 						$Db->phpScriptFileName = null;
 						$Db->phpScript         = null;
 					}
-					$Db->save();
+					$Db->insert();
 				}
 			}
 		}

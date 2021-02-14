@@ -3,7 +3,7 @@
 namespace Infira\Fookie\request;
 
 use AppConfig;
-use Infira\Fookie\facade\Http;
+use Infira\Utils\Http;
 
 class Payload
 {
@@ -108,12 +108,8 @@ class Payload
 	
 	public static function getOutput(): string
 	{
-		if (AppConfig::isDevENV())
-		{
-			self::setField('repLink', str_replace('_sr', '_rr', Http::getCurrentUrl()));
-		}
-		
-		
+		self::setField('repLink', str_replace('_rid', '_rrid', Http::getCurrentUrl()));
+		self::setField('repID', Http::getGET('_rid'));
 		if (self::$plainPoutput)
 		{
 			if (self::haveError())

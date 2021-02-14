@@ -2,7 +2,7 @@
 
 namespace Infira\Fookie\controller;
 
-use Infira\Fookie\facade\Http;
+use Infira\Utils\Http;
 use Infira\Fookie\facade\File;
 use Infira\Fookie\request\Route;
 use Infira\Fookie\request\Payload;
@@ -73,7 +73,7 @@ class ControlPanel extends Controller
 		$controller = Http::getGET('subClass');
 		if ($controller == 'updates')
 		{
-			$className = '\Infira\Fookie\controller\SystemUpdater';
+			$className = Fookie::optExists('systemController') ? Fookie::opt('systemController') : '\Infira\Fookie\controller\SystemUpdater';
 		}
 		elseif ($controller == 'db')
 		{

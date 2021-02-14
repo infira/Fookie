@@ -116,11 +116,6 @@ abstract class Manager
 		return self::setGetVar("defaultCacheDriver", $implementer, "string");
 	}
 	
-	public final static function cacheBaseAlias($alias = null)
-	{
-		return self::setGetVar("cacheBaseAlias", $alias, "string", "CACHE_BASE_ALIAS");
-	}
-	
 	/**
 	 * Log SQL Query history to database
 	 *
