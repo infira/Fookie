@@ -195,6 +195,7 @@ class Route
 			if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $contentType))
 			{
 				$requestPayload = json_decode(file_get_contents("php://input", false, stream_context_get_default(), 0, $_SERVER["CONTENT_LENGTH"]));
+				addExtraErrorInfo('php://input', $requestPayload);
 				
 				$requestPayload = Variable::apply((object)[], $requestPayload, ["ajaxMethodArguments" => null]);
 				
@@ -228,6 +229,10 @@ class Route
 					$Db->method($_SERVER['REQUEST_METHOD']);
 					$Db->uri($_SERVER['REQUEST_URI']);
 					$Db->insert();
+					$repLink = str_replace('_rid', '_rrid', Http::getCurrentUrl());
+					addExtraErrorInfo('errorReplicateLink', $repLink);
+					Payload::setField('repLink', $repLink);
+					Payload::setField('repID', Http::getGET('_rid'));
 				}
 			}
 		}
@@ -240,6 +245,8 @@ class Route
 			$req                       = $Db->select()->getObject();
 			$controllerMethodArguments = unserialize($req->methodArguments);
 			$post                      = unserialize($req->post);
+			addExtraErrorInfo('saved$req', $req);
+			addExtraErrorInfo('errorReplicateLink', Http::getCurrentUrl());
 			Http::flushPOST((is_array($post) ? $post : []));
 			$_SERVER['REQUEST_METHOD'] = $req->method;
 		}

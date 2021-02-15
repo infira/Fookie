@@ -108,8 +108,6 @@ class Payload
 	
 	public static function getOutput(): string
 	{
-		self::setField('repLink', str_replace('_rid', '_rrid', Http::getCurrentUrl()));
-		self::setField('repID', Http::getGET('_rid'));
 		if (self::$plainPoutput)
 		{
 			if (self::haveError())
