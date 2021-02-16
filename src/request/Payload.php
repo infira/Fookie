@@ -134,7 +134,7 @@ class Payload
 				}
 				else
 				{
-					$output['error'] = strip_tags($output['error'], '<br>');
+					$output['error'] = '<pre>' . strip_tags($output['error'], '<br>') . '</pre>';
 				}
 			}
 		}
