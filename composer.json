@@ -9,7 +9,7 @@
   "minimum-stability": "dev",
   "prefer-stable"    : true,
   "autoload"         : {
-	"files": ["definitions.php", "functions.php"],
+	"files": ["src/definitions.php", "src/functions.php"],
 	"psr-4": {
 	  "Infira\\Fookie\\config\\"    : "src/config",
 	  "Infira\\Fookie\\controller\\": "src/controller",
