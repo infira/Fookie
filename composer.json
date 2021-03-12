@@ -1,29 +1,32 @@
 {
-  "name":              "infira/fookie",
-  "authors":           [
+  "name"             : "infira/fookie",
+  "authors"          : [
 	{
-	  "name":  "Gen Taliaru",
+	  "name" : "Gen Taliaru",
 	  "email": "gen@infira.ee"
 	}
   ],
   "minimum-stability": "dev",
-  "prefer-stable":     true,
-  "autoload":          {
+  "prefer-stable"    : true,
+  "autoload"         : {
+	"files": ["definitions.php", "functions.php"],
 	"psr-4": {
-	  "Infira\\Fookie\\config\\":     "src/config",
+	  "Infira\\Fookie\\config\\"    : "src/config",
 	  "Infira\\Fookie\\controller\\": "src/controller",
-	  "Infira\\Fookie\\facade\\":     "src/facade",
-	  "Infira\\Fookie\\helper\\":     "src/helper",
-	  "Infira\\Fookie\\request\\":    "src/request",
-	  "Infira\\Fookie\\":             "src/"
+	  "Infira\\Fookie\\facade\\"    : "src/facade",
+	  "Infira\\Fookie\\helper\\"    : "src/helper",
+	  "Infira\\Fookie\\request\\"   : "src/request",
+	  "Infira\\Fookie\\Smurf\\"     : "src/smurfs",
+	  "Infira\\Fookie\\"            : "src/"
 	}
   },
-  "require":           {
+  "require"          : {
 	"altorouter/altorouter": "v1.2.0",
-	"infira/errorhandler":   "dev-master",
-	"infira/utils":          "1.*",
-	"infira/poesis":         "dev-master",
-	"infira/cachly":         "dev-master",
-	"infira/farray":         "dev-main"
+	"infira/errorhandler"  : "dev-master",
+	"infira/utils"         : "1.*",
+	"infira/poesis"        : "dev-master",
+	"infira/cachly"        : "dev-master",
+	"infira/farray"        : "dev-main",
+	"symfony/console"      : "5.x-dev"
   }
 }
