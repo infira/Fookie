@@ -27,7 +27,6 @@ class Fookie
 	public static function init()
 	{
 		Autoloader::setPath('PoesisDataMethodsExtendor2', __DIR__ . '/traits/PoesisDataMethodsExtendor2.trait.php');
-		Autoloader::init();
 		
 		Poesis::init();
 		\Infira\Poesis\Autoloader::setDataGettersExtendorPath(Path::fookieTraits('PoesisDataMethodsExtendor.trait.php'));
