@@ -1,0 +1,33 @@
+<?php
+require_once 'vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+
+define("IS_TEST", true);
+
+$config  = ["errorLevel"  => -1,//-1 means all erors, see https://www.php.net/manual/en/function.error-reporting.php
+            "env"         => "dev", //dev,stable (stable env does not display full errors erros
+            "email"       => ($environment == "live") ? $Mailer : false, //or you can provide simply email address, then default PHPMailer instance is used
+            "beforeThrow" => null, "debugBacktraceOption" => DEBUG_BACKTRACE_IGNORE_ARGS];
+$Handler = new Infira\Error\Handler($config);
+
+try
+{
+	$app = new Application();
+	require_once __DIR__ . '/smurfAdd.php';
+	$app->setCatchExceptions(false);
+	$app->run(new Symfony\Component\Console\Input\StringInput(Http::get('command')));
+}
+catch (\Infira\Error\Error $e)
+{
+	cleanOutput(true);
+	echo $e->getMessage();
+}
+catch (Throwable $e)
+{
+	$msg = $Handler->catch($e);
+	echo $msg;
+}
+?>
+
+

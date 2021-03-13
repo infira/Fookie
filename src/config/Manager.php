@@ -6,9 +6,29 @@ use Infira\Fookie\config\Entries as ConfigEntries;
 
 abstract class Manager
 {
-	
 	public static function init()
 	{
+		if (!defined("BASE_DIR"))
+		{
+			alert("BASE_DIR must be defined");
+		}
+		if (!defined("TEMP_DIR"))
+		{
+			alert("TEMP_DIR must be defined");
+		}
+		if (!defined("APP_DIR"))
+		{
+			alert("APP_DIR must be defined");
+		}
+		if (!self::projectName())
+		{
+			alert("AppConfig porjectName must be defined");
+		}
+		if (!self::sessionTimeout())
+		{
+			alert("AppConfig sessionTimeout must be defined");
+		}
+		
 		if (!ConfigEntries::get('__configIsIntialized'))
 		{
 			ConfigEntries::addDefaultValue("defaultCacheDriver", "sess");
@@ -25,26 +45,6 @@ abstract class Manager
 	public function __call($name, $arguments)
 	{
 		alert("Config : you trying to call config function $name but this not exists or is depreacated");
-	}
-	
-	public static function finalize()
-	{
-		if (!defined("BASE_DIR"))
-		{
-			alert("BASE_DIR must be defined");
-		}
-		if (!ConfigEntries::get("__configIsIntialized"))
-		{
-			alert("AppConfig::init() must be called");
-		}
-		if (!self::projectName())
-		{
-			alert("AppConfig porjectName must be defined");
-		}
-		if (!self::sessionTimeout())
-		{
-			alert("AppConfig sessionTimeout must be defined");
-		}
 	}
 	
 	protected static function setGetVar($name, $value = null, $fixWidth = false, $setDefinition = false)

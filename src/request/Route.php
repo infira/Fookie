@@ -37,8 +37,6 @@ class Route
 		self::$role        = AppConfig::routeCurrent();
 		self::$path        = Path::fix(Http::getGET(self::$httpVarName, ""));
 		self::$Alto        = new AltoRouterExtendor();
-		self::map('system', 'ControlPanelDashboard', 'GET', 'controlpanel', '\Infira\Fookie\controller\ControlPanel#index');
-		self::map('system', 'ControlPanelSubClass', 'GET', 'controlpanel/[:subClass]', '\Infira\Fookie\controller\ControlPanel#subClass');
 		
 		$operationController = Fookie::optExists('operationController') ? Fookie::opt('operationController') : '\Infira\Fookie\controller\Operation';
 		self::map('system', 'Operation', 'GET', 'op/[:opName]', "$operationController#handle");
@@ -257,12 +255,6 @@ class Route
 		}
 		$controllerName = self::getController();
 		addExtraErrorInfo("currentControllerName", $controllerName);
-		if (self::in('ControlPanelDashboard,ControlPanelSubClass'))
-		{
-			require_once Path::fookie('controller/ControlPanel.controller.php');
-		}
-		
-		
 		$methodName = self::$RouteNode->controllerMethod;
 		$Controller = new $controllerName();
 		$Controller->validate();

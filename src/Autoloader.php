@@ -17,6 +17,8 @@ class Autoloader
 	private static $classLocationFileLines = [];
 	public static  $updateFromConsole      = false;
 	private static $maxLen                 = 0;
+	private static $updateConfig           = [];
+	
 	
 	public static function init(string $classLocationFilePath): bool
 	{
@@ -83,27 +85,34 @@ class Autoloader
 		self::$locations[$name] = $classFileLocation;
 	}
 	
+	private static function loadFromJson(string $jsonFile, $addPathPrefix = '')
+	{
+		$config             = (array)json_decode(file_get_contents($jsonFile));
+		$config['classMap'] = (array)$config['classMap'];
+		
+		self::$updateConfig['classMap'] = array_merge(self::$updateConfig['classMap'], $config['classMap']);
+		self::$updateConfig['scan']     = array_merge(self::$updateConfig['scan'], $config['scan']);
+		
+		foreach (self::$updateConfig['classMap'] as $name => $path)
+		{
+			self::$updateConfig['classMap'][$name] = $addPathPrefix . $path;
+		}
+	}
+	
 	public static function update(string $jsonFile, string $installLocation)
 	{
+		$cw = getcwd() . '/';
 		if (!file_exists($jsonFile))
 		{
 			alert("Config file not found");
 		}
-		$defaults             = [];
-		$defaults['classMap'] = [];
-		$defaults['scan']     = [];
-		$config               = (array)json_decode(file_get_contents($jsonFile));
 		
-		$config             = array_merge($defaults, $config);
-		$config['classMap'] = (array)$config['classMap'];
+		self::$updateConfig = ['classMap' => [], 'scan' => []];
+		self::loadFromJson(__DIR__ . '/config/autoloader.json', str_replace($cw, '', __DIR__) . '/');
+		self::loadFromJson($jsonFile);
 		
 		$lines = ['<?php'];
-		foreach ((array)$config['classMap'] as $class => $path)
-		{
-			self::collect($class, $path);
-		}
-		
-		foreach ($config['scan'] as $item)
+		foreach (self::$updateConfig['scan'] as $item)
 		{
 			if (!is_dir($item->path))
 			{
@@ -111,6 +120,11 @@ class Autoloader
 			}
 			self::addIncludePath($item->path, $item->recursive);
 		}
+		foreach ((array)self::$updateConfig['classMap'] as $class => $path)
+		{
+			self::collect($class, $path);
+		}
+		
 		foreach (self::$classLocationFileLines as $row)
 		{
 			$lines[] = str_replace('[SPACES]', str_repeat(' ', self::$maxLen - $row->len), $row->str);

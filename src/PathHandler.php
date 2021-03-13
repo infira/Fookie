@@ -6,34 +6,6 @@ use Path;
 
 abstract class PathHandler
 {
-	public static function init()
-	{
-		$protocol = false;
-		if (!$protocol)
-		{
-			$serverUrl = 'http';
-			if (isset($_SERVER['HTTPS']))
-			{
-				$isHttps = strtolower($_SERVER['HTTPS']);
-				if ($isHttps == 'on')
-				{
-					$serverUrl .= 's';
-				}
-			}
-			$serverUrl .= '://';
-		}
-		else
-		{
-			$serverUrl = $protocol;
-		}
-		$serverUrl .= $_SERVER['HTTP_HOST'];
-		if (substr($serverUrl, -1) != "/")
-		{
-			$serverUrl .= "/";
-		}
-		define("SITE_URL", $serverUrl);
-	}
-	
 	public static final function root(string $path = "", $getAsUrl = false)
 	{
 		return self::base(BASE_DIR, $path, $getAsUrl);
