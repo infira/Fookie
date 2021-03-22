@@ -2,7 +2,7 @@
 
 trait PoesisDataMethodsExtendor
 {
-	use \PoesisDataMethodsExtendor2;
+	use AppPoesisDataMethods;
 	
 	/**
 	 * Get options for html <select tag

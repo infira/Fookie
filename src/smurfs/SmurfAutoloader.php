@@ -5,10 +5,24 @@ namespace Infira\Fookie\Smurf;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use Infira\Fookie\Autoloader;
+use Infira\Autoloader\Autoloader;
 
 class SmurfAutoloader extends SmurfCommand
 {
+	private $autoloaderConfigLocations = [];
+	
+	protected function addAutoloaderConfig(string $file, string $prefix = null)
+	{
+		if ($prefix === null)
+		{
+			$this->autoloaderConfigLocations[] = $file;
+		}
+		else
+		{
+			$this->autoloaderConfigLocations[] = [$file, $prefix];
+		}
+	}
+	
 	/**
 	 * @return void
 	 */
@@ -25,13 +39,15 @@ class SmurfAutoloader extends SmurfCommand
 	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
 		$this->output = &$output;
+		$this->addAutoloaderConfig(realpath(__DIR__ . '/../') . '/config/autoloader.json', realpath(__DIR__ . '/../') . '/');
+		$this->beforeExecute();
 		
 		if (!$this->isTest())
 		{
 			Autoloader::$updateFromConsole = true;
 		}
 		ob_start();
-		Autoloader::update(getcwd() . '/config/autoloader.json', 'config/autoloadLocations.php');
+		Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php');
 		$res = ob_get_contents();
 		ob_end_clean();
 		$errors = false;
@@ -64,3 +80,5 @@ class SmurfAutoloader extends SmurfCommand
 		return $this->success();
 	}
 }
+
+?>

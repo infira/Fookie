@@ -11,6 +11,8 @@ use Infira\Fookie\facade\Cache;
 use Infira\Poesis\ConnectionManager;
 use Infira\Cachly\options\DbDriverOptions;
 use AppConfig;
+use Infira\Poesis\Poesis;
+use Path;
 
 class Fookie
 {
@@ -68,6 +70,12 @@ class Fookie
 		self::closeConnections();
 		
 		return $payload;
+	}
+	
+	public static function initPoesis()
+	{
+		Poesis::init();
+		Poesis::useInfiraErrorHadler();
 	}
 	
 	public static function setOperationController(string $controller)

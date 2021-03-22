@@ -27,6 +27,7 @@
 	"infira/poesis"        : "dev-master",
 	"infira/cachly"        : "dev-master",
 	"infira/farray"        : "dev-main",
-	"symfony/console"      : "5.x-dev"
+	"symfony/console"      : "5.x-dev",
+	"infira/autoloader"    : "dev-main"
   }
 }

@@ -16,7 +16,7 @@ try
 	$app = new Application();
 	require_once __DIR__ . '/smurfAdd.php';
 	$app->setCatchExceptions(false);
-	$app->run(new Symfony\Component\Console\Input\StringInput(Http::get('command')));
+	$app->run(new Symfony\Component\Console\Input\StringInput($_GET['command']));
 }
 catch (\Infira\Error\Error $e)
 {
