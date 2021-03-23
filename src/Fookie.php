@@ -75,7 +75,6 @@ class Fookie
 	public static function initPoesis()
 	{
 		Poesis::init();
-		Poesis::useInfiraErrorHadler();
 	}
 	
 	public static function setOperationController(string $controller)

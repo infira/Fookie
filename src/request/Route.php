@@ -217,22 +217,31 @@ class Route
 				{
 					$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
 				}
-				
-				if (Http::existsGET('_rid'))
-				{
-					$Db = Db::TSavedRequest();
-					$Db->ID(Http::getGET('_rid'));
-					$Db->methodArguments->serialize($controllerMethodArguments);
-					$Db->post->serialize(Http::getPOST());
-					$Db->method($_SERVER['REQUEST_METHOD']);
-					$Db->uri($_SERVER['REQUEST_URI']);
-					$Db->insert();
-					$repLink = str_replace('_rid', '_rrid', Http::getCurrentUrl());
-					addExtraErrorInfo('errorReplicateLink', $repLink);
-					Payload::setField('repLink', $repLink);
-					Payload::setField('repID', Http::getGET('_rid'));
-				}
 			}
+		}
+		
+		if (Http::existsGET('_rid'))
+		{
+			$ID = Http::getGET('_rid');
+			$Db = Db::TSavedRequest();
+			$Db->ID($ID);
+			$Db->methodArguments->serialize($controllerMethodArguments);
+			$Db->post->serialize(Http::getPOST());
+			$Db->method($_SERVER['REQUEST_METHOD']);
+			$Db->uri($_SERVER['REQUEST_URI']);
+			$Db->insert();
+			$currentUrl = Http::getCurrentUrl();
+			if (preg_match('/_rid/', $currentUrl))
+			{
+				$repLink = str_replace('_rid', '_rrid', $currentUrl);
+			}
+			else
+			{
+				$repLink = $currentUrl . '?_rrid=' . $ID;
+			}
+			addExtraErrorInfo('errorReplicateLink', $repLink);
+			Payload::setField('repLink', $repLink);
+			Payload::setField('repID', Http::getGET('_rid'));
 		}
 		
 		

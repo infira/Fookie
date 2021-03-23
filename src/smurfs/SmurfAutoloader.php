@@ -42,31 +42,35 @@ class SmurfAutoloader extends SmurfCommand
 		$this->addAutoloaderConfig(realpath(__DIR__ . '/../') . '/config/autoloader.json', realpath(__DIR__ . '/../') . '/');
 		$this->beforeExecute();
 		
+		$errors = false;
 		if (!$this->isTest())
 		{
 			Autoloader::$updateFromConsole = true;
-		}
-		ob_start();
-		Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php');
-		$res = ob_get_contents();
-		ob_end_clean();
-		$errors = false;
-		if ($res)
-		{
-			$lines = explode("\n", $res);
-			foreach ($lines as $line)
+			ob_start();
+			Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php');
+			$res = ob_get_contents();
+			ob_end_clean();
+			if ($res)
 			{
-				if (substr($line, 0, 14) == 'CONSOLE_ERROR:')
+				$lines = explode("\n", $res);
+				foreach ($lines as $line)
 				{
-					$errors = true;
-					$line   = substr($line, 14);
-					$this->error("AutoloaderError:$line");
-				}
-				else
-				{
-					$this->message($line);
+					if (substr($line, 0, 14) == 'CONSOLE_ERROR:')
+					{
+						$errors = true;
+						$line   = substr($line, 14);
+						$this->error("AutoloaderError:$line");
+					}
+					else
+					{
+						$this->message('<info>generated autoloader Line: </info>' . $line);
+					}
 				}
 			}
+		}
+		else
+		{
+			debug(Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php'));
 		}
 		if ($errors)
 		{

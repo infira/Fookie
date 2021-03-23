@@ -2,27 +2,20 @@
 
 namespace Infira\Fookie;
 
-use Infira\Utils\Date;
-
-/**
- * This class handles users and php errors
- */
 class Log
 {
-	
 	/**
-	 * Make log
+	 * Log event
 	 *
 	 * @param string $title
 	 * @param mixed  $content
-	 * @param bool   $isError
-	 * @return int|object
+	 * @return int - returns log ID
 	 */
-	private static function doMake(string $title, $content, bool $isError = false)
+	public static function make(string $title, $content): int
 	{
-		$Db        = new \TLog();
-		$Db->title = $title;
-		$userID    = 0;
+		$Db = new \TLog();
+		$Db->event($title);
+		$userID = 0;
 		if (defined("__USER_ID"))
 		{
 			$userID = __USER_ID;
@@ -38,39 +31,42 @@ class Log
 			$Db->isSerialized(0);
 			alert("Cant serialize");
 		}
-		$Db->content    = $content;
-		$Db->insertDate = Date::nowSqlDateTime();
-		$Db->isError    = ($isError) ? 1 : 0;
-		$Db->ip         = getUserIP();
+		$Db->content($content);
+		$Db->ts->now();
+		$Db->ip = getUserIP();
 		$Db->insert();
 		
 		return $Db->getLastSaveID();
 	}
 	
-	
 	/**
-	 * Log event
-	 *
-	 * @param string $title
-	 * @param string $content
-	 * @return int|object
+	 * @param int|string $ID log ID or string 'last"
+	 * @return string
 	 */
-	public static function make(string $title, $content)
+	public static function getContent($ID): string
 	{
-		return self::doMake($title, $content, false);
-	}
-	
-	
-	/**
-	 * Log error
-	 *
-	 * @param string $title
-	 * @param string $content
-	 * @return int|object
-	 */
-	public static function makeError(string $title, string $content)
-	{
-		return self::doMake($title, $content, true);
+		$Db = new \TLog();
+		if ($ID === 'last')
+		{
+			$Db->orderBy("ID DESC");
+			$Db->limit(1);
+		}
+		else
+		{
+			$Db->ID($ID);
+		}
+		$Obj = $Db->select()->getObject();
+		if (is_object($Obj))
+		{
+			if ($Obj->isSerialized == 1)
+			{
+				debug(unserialize($Obj->content));
+			}
+			else
+			{
+				debug($Obj->content);
+			}
+		}
 	}
 }
 
