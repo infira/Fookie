@@ -1,13 +1,14 @@
 <?php
 
 namespace Infira\Fookie\request;
+
 class AltoRouterExtendor extends \AltoRouter
 {
 	public $namedRoutesForLinking = false;
 	
 	public function generate($routeName, array $params = [])
 	{
-		$url = parent::generate($routeName, $params) . '/';
+		$url = parent::generate($routeName, $params);
 		/*
 		preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER);
 		if (checkArray($matches))
@@ -34,3 +35,5 @@ class AltoRouterExtendor extends \AltoRouter
 		return $url;
 	}
 }
+
+?>
