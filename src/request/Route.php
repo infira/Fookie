@@ -237,7 +237,14 @@ class Route
 			}
 			else
 			{
-				$repLink = $currentUrl . '?_rrid=' . $ID;
+				if (strpos($currentUrl, '?') !== false)
+				{
+					$repLink = $currentUrl . '&_rrid=' . $ID;
+				}
+				else
+				{
+					$repLink = $currentUrl . '?_rrid=' . $ID;
+				}
 			}
 			addExtraErrorInfo('errorReplicateLink', $repLink);
 			Payload::setField('repLink', $repLink);
