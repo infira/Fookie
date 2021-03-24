@@ -46,31 +46,33 @@ class SmurfAutoloader extends SmurfCommand
 		if (!$this->isTest())
 		{
 			Autoloader::$updateFromConsole = true;
-			ob_start();
-			Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php');
-			$res = ob_get_contents();
-			ob_end_clean();
-			if ($res)
-			{
-				$lines = explode("\n", $res);
-				foreach ($lines as $line)
-				{
-					if (substr($line, 0, 14) == 'CONSOLE_ERROR:')
-					{
-						$errors = true;
-						$line   = substr($line, 14);
-						$this->error("AutoloaderError:$line");
-					}
-					else
-					{
-						$this->message('<info>generated autoloader Line: </info>' . $line);
-					}
-				}
-			}
+		}
+		$makedFiles = Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php');
+		$max        = 1;
+		foreach ($makedFiles as $name => $file)
+		{
+			$max = max($max, strlen($name));
+		}
+		if ($this->isTest())
+		{
+			debug($makedFiles);
 		}
 		else
 		{
-			debug(Autoloader::generateCache($this->autoloaderConfigLocations, 'config/autoloadLocations.php'));
+			foreach ($makedFiles as $name => $file)
+			{
+				if (substr($file, 0, 14) == 'CONSOLE_ERROR:')
+				{
+					$errors = true;
+					$file   = substr($file, 14);
+					$this->error("AutoloaderError:$file");
+				}
+				else
+				{
+					$spaces = str_repeat(' ', $max - strlen($name));
+					$this->message('<info>generated:' . $name . $spaces . ' </info>' . $file);
+				}
+			}
 		}
 		if ($errors)
 		{
