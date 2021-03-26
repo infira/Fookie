@@ -37,28 +37,6 @@ class Operation extends Controller
 		exit(AppConfig::getENV());
 	}
 	
-	public function testEmail()
-	{
-		if (Http::getGET("hash") == "asdas89f0sdhgsdg98")
-		{
-			$Mail = new \KIS\helper\mailer\KIS();
-			if (Http::getGET("email"))
-			{
-				$Mail->addAddress(Http::getGET("email"));
-			}
-			else
-			{
-				$Mail->addAddress("gen@infira.ee");
-			}
-			$Mail->Subject = "Test";
-			$Mail->Body    = "Tere gen, testin emaili saatmist, veendumaks et kas kõik on korras";
-			debug($Mail->send());
-			debug($Mail->ErrorInfo);
-		}
-		echo "Hello world!";
-		echo Prof()->dumpTimers();
-	}
-	
 	public function shortUrl()
 	{
 		$Db = new TShortUrl();
@@ -304,6 +282,28 @@ class Operation extends Controller
 		$startMemory = memory_get_usage();
 		$all         = Cache::$Driver->Redis->getItems();
 		debug("redis current usage", formatSize(memory_get_usage() - $startMemory));
+	}
+	
+	public function testEmail()
+	{
+		if (Http::getGET("hash") == "asdas89f0sdhgsdg98")
+		{
+			$Mail = new Infira();
+			if (Http::getGET("email"))
+			{
+				$Mail->addAddress(Http::getGET("email"));
+			}
+			else
+			{
+				$Mail->addAddress("gen@infira.ee");
+			}
+			$Mail->Subject = "Test";
+			$Mail->Body    = "Tere gen, testin emaili saatmist, veendumaks et kas kõik on korras";
+			debug($Mail->send());
+			debug($Mail->ErrorInfo);
+		}
+		echo "Hello world!";
+		echo Prof()->dumpTimers();
 	}
 }
 

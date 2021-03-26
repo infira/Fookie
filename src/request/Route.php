@@ -261,6 +261,7 @@ class Route
 			$post                      = unserialize($req->post);
 			addExtraErrorInfo('saved$req', $req);
 			addExtraErrorInfo('errorReplicateLink', Http::getCurrentUrl());
+			addExtraErrorInfo('$controllerMethodArguments', $controllerMethodArguments);
 			Http::flushPOST((is_array($post) ? $post : []));
 			$_SERVER['REQUEST_METHOD'] = $req->method;
 		}
