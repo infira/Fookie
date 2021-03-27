@@ -35,6 +35,7 @@ abstract class Manager
 			ConfigEntries::addDefaultValue("dbCacheDriver", "sess");
 			ConfigEntries::addDefaultValue("__configIsIntialized", true);
 			ConfigEntries::addDefaultValue("voidDbTableClassInstall", []);
+			ConfigEntries::addDefaultValue("saveRequests", true);
 			self::routeGETParameter('route');
 			self::routeCurrent('web');
 			self::routeDefaultRole('web');
@@ -212,6 +213,17 @@ abstract class Manager
 	public final static function routeCurrent(string $var = null)
 	{
 		return self::setGetVar("routeCurrent", $var, "string");
+	}
+	
+	/**
+	 * Save requests
+	 *
+	 * @param bool|null $bool
+	 * @return bool
+	 */
+	public final static function saveRequests(bool $bool = null)
+	{
+		return self::setGetVar("saveRequests", $bool, "string");
 	}
 	
 	/**

@@ -220,7 +220,7 @@ class Route
 			}
 		}
 		
-		if (Http::existsGET('_rid'))
+		if (Http::existsGET('_rid') and AppConfig::saveRequests())
 		{
 			$ID = Http::getGET('_rid');
 			$Db = Db::TSavedRequest();
@@ -252,7 +252,7 @@ class Route
 		}
 		
 		
-		if (Http::existsGET('_rrid'))
+		if (Http::existsGET('_rrid') and AppConfig::saveRequests())
 		{
 			$Db = Db::TSavedRequest();
 			$Db->ID(Http::getGET('_rrid'));
