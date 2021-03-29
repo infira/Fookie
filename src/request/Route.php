@@ -57,7 +57,7 @@ class Route
 				$url = substr($url, 0, -1);
 			}
 		}
-		if ($url{0} == '/')
+		if ($url && $url{0} == '/')
 		{
 			$url = substr($url, 1);
 		}
