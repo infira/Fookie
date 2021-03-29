@@ -7,14 +7,9 @@ use Infira\Utils\Http;
 
 class Payload
 {
-	private static $data         = null;
+	private static $data         = ["payload" => null];
 	private static $plainPoutput = false;
 	private static $outputsJSON  = false;
-	
-	public static function init()
-	{
-		self::$data = ["payload" => null];
-	}
 	
 	public static function setField($name, $value)
 	{
@@ -134,7 +129,7 @@ class Payload
 				}
 				else
 				{
-					$output['error'] = '<pre>' . strip_tags($output['error'], '<br>') . '</pre>';
+					$output['error'] = strip_tags($output['error'], '<br>');
 				}
 			}
 		}

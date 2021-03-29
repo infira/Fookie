@@ -27,11 +27,48 @@ class Fookie
 		}
 	}
 	
-	public static function boot()
+	public static function boot(callable $beforeController = null)
 	{
-		Route::detect();
+		Route::match();
+		if ($beforeController !== null)
+		{
+			$beforeController();
+		}
+		if (Route::isMatched())
+		{
+			Route::runController();
+		}
+		else
+		{
+			http_response_code(404);
+			Payload::setError("route not found : " . (string)Route::getRequestUrl());
+		}
+		$payload = Payload::getOutput();
+		if (self::opt('showProfile'))
+		{
+			$payload .= '<pre></pre><div class="_profiler">';
+			$payload .= Prof()->dumpTimers();
+			$payload .= QueryHistory::getHTMLTable();
+			$payload .= '</div></pre>';
+		}
+		self::closeConnections();
 		
-		$sessionName                 = 'PHPSESSID';
+		return $payload;
+	}
+	
+	public static function initDb()
+	{
+		$dbOptons         = new DbDriverOptions();
+		$dbOptons->client = ConnectionManager::default()->getMysqli();
+		Cache::configureDb($dbOptons);
+	}
+	
+	public static function initSession(string $name = 'PHPSESSID')
+	{
+		if (!Route::isMatched())
+		{
+			return false;
+		}
 		$differnetSessionForEachRole = true;
 		if (Fookie::optExists('differnetSessionForEachRole'))
 		{
@@ -40,46 +77,20 @@ class Fookie
 		
 		if ($differnetSessionForEachRole)
 		{
-			$sessionName = Route::getRole();
+			$name = Route::getRole();
 			if (Http::existsGET('_overrideSessionName'))
 			{
-				$sessionName = Http::getGET('_overrideSessionName');
+				$name = Http::getGET('_overrideSessionName');
 			}
 		}
-		Session::init($sessionName);
+		Session::init($name);
+	}
+	
+	public static function initCache()
+	{
 		Cache::init();
 		Cache::setDefaultDriver(AppConfig::defaultCacheDriver());
 		Cache::setCacheKeyPrefix(AppConfig::getENV());
-		
-		$dbOptons         = new DbDriverOptions();
-		$dbOptons->client = ConnectionManager::default()->getMysqli();
-		Cache::configureDb($dbOptons);
-		
-		Payload::init();
-		self::beforeRouteBoot();
-		Route::boot();
-		$payload = Payload::getOutput();
-		if (Http::existsGET('showProfile'))
-		{
-			$payload .= '<pre></pre><div class="_profiler">';
-			$payload .= Prof()->dumpTimers();
-			$payload .= QueryHistory::getHTMLTable();
-			$payload .= '</div></pre>';
-		}
-		
-		self::closeConnections();
-		
-		return $payload;
-	}
-	
-	public static function initPoesis()
-	{
-		Poesis::init();
-	}
-	
-	public static function setOperationController(string $controller)
-	{
-		self::$options['operationController'] = $controller;
 	}
 	
 	public static function setUseDiffernetSessionForEachRole(bool $bool)
@@ -87,9 +98,9 @@ class Fookie
 		self::$options['differnetSessionForEachRole'] = $bool;
 	}
 	
-	public static function setBeforeRouteBoot(callable $callable)
+	public static function setShowProfile(callable $callable)
 	{
-		self::$options['beforeRouteBoot'] = $callable;
+		self::setOpt('showProfile', $callable);
 	}
 	
 	public static function optExists(string $name)
@@ -97,16 +108,16 @@ class Fookie
 		return array_key_exists($name, self::$options);
 	}
 	
-	/**
-	 * @param string $name
-	 * @param mixed  $value - if set value is not UNDEFINDED then its used to sed valie
-	 * @return mixed|null
-	 */
-	public static function opt(string $name, $value = UNDEFINDED)
+	public static function setOpt(string $name, $value)
 	{
-		if ($value !== UNDEFINDED)
+		self::$options[$name] = $value;
+	}
+	
+	public static function opt(string $name)
+	{
+		if (!self::optExists($name))
 		{
-			self::$options[$name] = $value;
+			return false;
 		}
 		
 		return self::$options[$name];

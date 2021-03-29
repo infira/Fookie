@@ -40,7 +40,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	/**
 	 * Ghot method to enuse called contoller exteds this class
 	 */
-	public function validate()
+	public function validate(): bool
 	{
 		if (!$this->constructorCalled)
 		{

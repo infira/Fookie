@@ -13,7 +13,8 @@ use Infira\Fookie\facade\Db;
 class Route
 {
 	private        $route;
-	private static $routes = [];
+	private static $routes  = [];
+	private static $options = [];
 	
 	/**
 	 * @var AltoRouterExtendor
@@ -26,26 +27,28 @@ class Route
 	private static $RouteNode;
 	private static $defaultRole;
 	private static $role;
-	private static $httpVarName       = "route";
-	private static $path;
 	private static $blockedHTTPOrigin = [];
 	
 	public static function init()
 	{
-		self::$httpVarName = AppConfig::routeGETParameter();
 		self::$defaultRole = AppConfig::routeDefaultRole();
 		self::$role        = AppConfig::routeCurrent();
-		self::$path        = Path::fix(Http::getGET(self::$httpVarName, ""));
 		self::$Alto        = new AltoRouterExtendor();
+		self::$RouteNode   = new RouteNode();
 		
-		$operationController = Fookie::optExists('operationController') ? Fookie::opt('operationController') : '\Infira\Fookie\controller\Operation';
-		self::map('system', 'Operation', 'GET', 'op/[:opName]', "$operationController#handle");
+		self::map('system', 'Operation', 'GET', 'op/[:opName]', function ()
+		{
+			$operationController = self::opt('operationController') ? self::opt('operationController') : '\Infira\Fookie\controller\Operation';
+			
+			return (object)['controller' => $operationController, 'method' => 'handle'];
+		});
 		self::blockHTTPOrigin("chrome-extension://aegnopegbbhjeeiganiajffnalhlkkjb"); //it causes lots of _post requests to server it is that plugin https://chrome.google.com/webstore/detail/browser-safety/aegnopegbbhjeeiganiajffnalhlkkjb
 	}
 	
 	public static function getRequestUrl()
 	{
-		$url = trim(Http::getGET(self::$httpVarName));
+		$ex  = explode('?', $_SERVER['REQUEST_URI'], 2);
+		$url = trim($ex[0]);
 		$len = strlen($url);
 		if ($len > 0)
 		{
@@ -54,21 +57,20 @@ class Route
 				$url = substr($url, 0, -1);
 			}
 		}
+		if ($url{0} == '/')
+		{
+			$url = substr($url, 1);
+		}
 		
 		return $url;
 	}
 	
-	public static function detect()
+	public static function match(): bool
 	{
 		Prof()->startTimer("Route::detect");
-		self::$RouteNode = new RouteNode();
 		if (Http::getRequestMethod() == "head") //in case of head must return "" https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
 		{
 			exit;
-		}
-		if (!Http::existsGET(self::$httpVarName))
-		{
-			Http::setGET(self::$httpVarName, "");
 		}
 		if (isset($_SERVER["HTTP_ORIGIN"]))
 		{
@@ -77,7 +79,6 @@ class Route
 				exit("HTTP_ORIGIN not allowed");
 			}
 		}
-		
 		addExtraErrorInfo("currentRole", self::$role);
 		$addRoutes = function ($routes, $roleName)
 		{
@@ -118,22 +119,18 @@ class Route
 		}
 		$requestUrlRoute = self::getRequestUrl();
 		$match           = self::$Alto->match($requestUrlRoute);
-		//debug($match);exit;
 		if (!$match)
 		{
 			if (!in_array(Http::getRequestMethod(), ["propfind", "options", "option"]))
 			{
-				addExtraErrorInfo("requestUrlRoute", $requestUrlRoute);
-				addExtraErrorInfo("trace", getTrace());
-				addExtraErrorInfo("routes", self::$Alto->getRoutes());
-				if (AppConfig::isDevENV())
+				if (!AppConfig::isLiveENV())
 				{
-					alert("route not found : " . (string)$requestUrlRoute);
+					Payload::setField("requestUrlRoute", $requestUrlRoute);
+					Payload::setField("trace", getTrace());
+					Payload::setField("routes", self::$Alto->getRoutes());
 				}
-				else
-				{
-					exit("route not found : " . (string)$requestUrlRoute);
-				}
+				
+				return false;
 			}
 		}
 		else
@@ -160,28 +157,22 @@ class Route
 			{
 				Http::setGET($key, $val);
 			}
-			
-			$match->extra = new stdClass();
-			if (strpos($match->target->controller, '[') !== false)
-			{
-				$getNameFrom               = str_replace(['[', ']'], '', $match->target->controller);
-				$match->target->controller = $match->extra->$getNameFrom;
-			}
-			
-			if (strpos($match->target->method, '[') !== false)
-			{
-				$getNameFrom           = str_replace(['[', ']'], '', $match->target->method);
-				$match->target->method = $match->extra->$getNameFrom;
-			}
 			//Set router data
 			self::$RouteNode->controller       = $match->target->controller;
 			self::$RouteNode->controllerMethod = $match->target->method;
+			self::$RouteNode->matched          = true;
 		}
 		Prof()->stopTimer("Route::detect");
+		
+		return true;
 	}
 	
-	public static function boot()
+	public static function runController()
 	{
+		if (!self::isMatched())
+		{
+			return false;
+		}
 		$controllerMethodArguments = [];
 		$contentType               = '';
 		if (isset($_SERVER["CONTENT_TYPE"]) and preg_match('%application/json%', $_SERVER["CONTENT_TYPE"]))
@@ -196,12 +187,6 @@ class Route
 				addExtraErrorInfo('php://input', $requestPayload);
 				
 				$requestPayload = Variable::apply((object)[], $requestPayload, ["ajaxMethodArguments" => null]);
-				
-				if (property_exists($requestPayload, 'parseRequestAsPost'))
-				{
-					alert("Do not use parseRequestAsPost");
-					unset($requestPayload->parseRequestAsPost);
-				}
 				
 				if ($requestPayload->ajaxMethodArguments)
 				{
@@ -270,11 +255,12 @@ class Route
 		{
 			$controllerMethodArguments = [];
 		}
-		$controllerName = self::getController();
+		$controllerName = self::$RouteNode->controller;
 		addExtraErrorInfo("currentControllerName", $controllerName);
 		$methodName = self::$RouteNode->controllerMethod;
 		$Controller = new $controllerName();
 		$Controller->validate();
+		
 		if (Payload::haveError())
 		{
 			//
@@ -286,7 +272,10 @@ class Route
 		}
 		else
 		{
-			alert("$controllerName->$methodName not existing");
+			if (AppConfig::isLiveENV())
+			{
+				Payload::setError("$controllerName->$methodName does not exists");
+			}
 		}
 	}
 	
@@ -356,6 +345,11 @@ class Route
 	public static function is(string $name)
 	{
 		return (self::$RouteNode->name == $name);
+	}
+	
+	public static function isMatched(): bool
+	{
+		return self::$RouteNode->matched;
 	}
 	
 	/**
@@ -444,6 +438,33 @@ class Route
 			alert("Cant redirect on ajax");
 		}
 		Http::go(self::getLink($pathOrName, $params));
+	}
+	
+	//######################## Options
+	
+	public static function setOperationController(string $controller)
+	{
+		self::setOpt('operationController', $controller);
+	}
+	
+	public static function optExists(string $name)
+	{
+		return array_key_exists($name, self::$options);
+	}
+	
+	public static function setOpt(string $name, $value)
+	{
+		self::$options[$name] = $value;
+	}
+	
+	public static function opt(string $name)
+	{
+		if (!self::optExists($name))
+		{
+			return false;
+		}
+		
+		return self::$options[$name];
 	}
 }
 

@@ -36,7 +36,6 @@ abstract class Manager
 			ConfigEntries::addDefaultValue("__configIsIntialized", true);
 			ConfigEntries::addDefaultValue("voidDbTableClassInstall", []);
 			ConfigEntries::addDefaultValue("saveRequests", true);
-			self::routeGETParameter('route');
 			self::routeCurrent('web');
 			self::routeDefaultRole('web');
 			self::routeRoles(['web']);
@@ -183,17 +182,6 @@ abstract class Manager
 	}
 	
 	/**
-	 * What is the route http variable defined in .htaccess
-	 *
-	 * @param $var $arr - parameter name in _get
-	 * @return bool
-	 */
-	public final static function routeGETParameter(string $var = null)
-	{
-		return self::setGetVar("routeGETParameter", $var, "string");
-	}
-	
-	/**
 	 * Default route role
 	 *
 	 * @param string $var
@@ -269,13 +257,6 @@ abstract class Manager
 	 * @return bool
 	 */
 	abstract public static function isLiveENV();
-	
-	/**
-	 * Check is current envinronment live like, prelive, env what must act like live
-	 *
-	 * @return bool
-	 */
-	abstract public static function isLiveWorthy();
 	
 	/**
 	 * Check is current envinronment dev
