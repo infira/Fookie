@@ -9,6 +9,7 @@ use Infira\Fookie\facade\Variable;
 use Db;
 use Infira\Utils\File;
 use Infira\Fookie\facade\Cache;
+use Infira\Cachly\Cachly;
 
 class CacheFlusher extends SmurfCommand
 {
@@ -73,15 +74,16 @@ class CacheFlusher extends SmurfCommand
 	
 	function flushCache()
 	{
-		if (Cache::isConfigured('file'))
+		Cache::init();
+		if (Cache::isConfigured(Cachly::FILE))
 		{
 			Cache::$Driver->File->flush();
 		}
-		if (Cache::isConfigured('Sess'))
+		if (Cache::isConfigured(Cachly::SESS))
 		{
 			Cache::$Driver->Sess->flush();
 		}
-		if (Cache::isConfigured('db'))
+		if (Cache::isConfigured(Cachly::DB))
 		{
 			Cache::$Driver->Db->flush();
 		}
