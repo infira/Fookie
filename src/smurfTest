@@ -5,10 +5,10 @@ use Symfony\Component\Console\Application;
 
 define("IS_TEST", true);
 
-$config  = ["errorLevel"  => -1,//-1 means all erors, see https://www.php.net/manual/en/function.error-reporting.php
-            "env"         => "dev", //dev,stable (stable env does not display full errors erros
-            "email"       => ($environment == "live") ? $Mailer : false, //or you can provide simply email address, then default PHPMailer instance is used
-            "beforeThrow" => null, "debugBacktraceOption" => DEBUG_BACKTRACE_IGNORE_ARGS];
+$config  = ["errorLevel"           => -1,//-1 means all erors, see https://www.php.net/manual/en/function.error-reporting.php
+            "env"                  => "dev", //dev,stable (stable env does not display full errors erros
+            "email"                => ($environment == "live") ? $Mailer : false, //or you can provide simply email address, then default PHPMailer instance is used
+            "debugBacktraceOption" => DEBUG_BACKTRACE_IGNORE_ARGS];
 $Handler = new Infira\Error\Handler($config);
 
 try
@@ -20,13 +20,11 @@ try
 }
 catch (\Infira\Error\Error $e)
 {
-	cleanOutput(true);
-	echo $e->getMessage();
+	echo $e->getHTMLTable();
 }
 catch (Throwable $e)
 {
-	$msg = $Handler->catch($e);
-	echo $msg;
+	echo $Handler->catch($e)->getHTMLTable();
 }
 ?>
 

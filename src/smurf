@@ -3,7 +3,28 @@ require_once 'vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
 
-$app = new Application();
-require_once __DIR__ . '/smurfAdd.php';
-$app->run();
+$out = new Symfony\Component\Console\Output\ConsoleOutput();
+try
+{
+	$app = new Application();
+	require_once __DIR__ . '/smurfAdd.php';
+	$app->setCatchExceptions(false);
+	$app->run();
+}
+catch (\Infira\Error\Error $e)
+{
+	$out->writeln("General error: <error>" . $e->getMessage() . "</error>");
+	$out->writeln('<info>Trace</info>');
+	foreach ($e->getStackTrace() as $key => $row)
+	{
+		$key++;
+		$out->writeln($key . ') on file <info>' . $row['file'] . '</info>');
+	}
+}
+catch (Throwable $e)
+{
+	$out->writeln("General error: <error>" . $e->getMessage() . "</error>");
+}
 ?>
+
+
