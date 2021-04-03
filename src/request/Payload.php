@@ -4,6 +4,7 @@ namespace Infira\Fookie\request;
 
 use AppConfig;
 use Infira\Utils\Http;
+use Infira\Utils\Is;
 
 class Payload
 {
@@ -38,11 +39,25 @@ class Payload
 	
 	public static function setError($error, $errorID = null)
 	{
+		if (Is::isClass($error, 'Infira\Error\Error'))
+		{
+			foreach ((array)$error->getStack() as $name => $val)
+			{
+				if ($name == 'msg')
+				{
+					$name = 'error';
+				}
+				self::setField($name, $val);
+			}
+		}
+		else
+		{
+			self::setField("error", $error);
+		}
 		if ($errorID)
 		{
 			self::setField("errorLink", Route::getOperationLink(['opName' => 'viewErrorLog', 'hash' => 'a12g3fs14g3d5h36gk56hilasd3a', 'ID' => $errorID]));
 		}
-		self::setField("error", $error);
 	}
 	
 	public static function getError()
