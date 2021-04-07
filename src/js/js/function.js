@@ -297,3 +297,13 @@ Function.prototype.pass             = function ()
 		return func.apply(this, args);
 	};
 };
+Function.prototype.add              = function (newFunc)
+{
+	var args = arguments,
+	    func = this;
+	return function ()
+	{
+		func.apply(this, args);
+		return newFunc.apply(null, args);
+	};
+};
