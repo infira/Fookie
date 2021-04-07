@@ -5,15 +5,46 @@ namespace Infira\Fookie\Smurf;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
+
+use Infira\Poesis\modelGenerator\Options;
+use Infira\Poesis\modelGenerator\Generator;
+use Infira\Poesis\ConnectionManager;
+use Infira\Poesis\Connection;
+
 use File;
 use Db;
-use Path;
 use Infira\Utils\Dir;
 
-class DbViews extends SmurfCommand
+
+class SmurfDb extends SmurfCommand
 {
 	private $dbFiles     = ['views' => [], 'triggers' => []];
 	private $voidDbFiles = ['views' => [], 'triggers' => []];
+	
+	/**
+	 * @var Options
+	 */
+	protected $Options;
+	private   $installPath = null;
+	
+	/**
+	 * @var Connection
+	 */
+	private $dbConnection = null;
+	
+	/**
+	 * @param Connection|null $dbConnection
+	 */
+	public function setDbConnection(?Connection $dbConnection): void
+	{
+		$this->dbConnection = $dbConnection;
+	}
+	
+	protected function setInstallPath(string $path)
+	{
+		$this->installPath = $path;
+	}
 	
 	protected function addViewPath(string $path)
 	{
@@ -101,7 +132,9 @@ class DbViews extends SmurfCommand
 	 */
 	protected function configure(): void
 	{
-		$this->setName('db:views');
+		$this->setName('db')
+			->addOption('models', 'm', InputOption::VALUE_NONE, 'Models')
+			->addOption('views', 'w', InputOption::VALUE_NONE, 'Views');
 	}
 	
 	/**
@@ -111,11 +144,46 @@ class DbViews extends SmurfCommand
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
+		$this->output  = &$output;
+		$this->input   = &$input;
+		$this->Options = new Options();
 		$this->beforeExecute();
-		$this->output = &$output;
 		
-		$this->views();
-		$this->triggers();
+		if ($input->getOption('views'))
+		{
+			$this->beforeExecute_Views();
+			$this->views();
+			$this->triggers();
+		}
+		if ($input->getOption('models'))
+		{
+			$this->beforeExecute_Models();
+			$this->dbConnection = $this->dbConnection ? $this->dbConnection : ConnectionManager::default();
+			$gen                = new Generator($this->dbConnection, $this->Options);
+			foreach ($gen->generate($this->installPath) as $file)
+			{
+				$this->message('<info>generated model: </info>' . $file);
+			}
+		}
+		
+		
+		return $this->success();
+	}
+	
+	/**
+	 * @param InputInterface  $input
+	 * @param OutputInterface $output
+	 * @return int
+	 */
+	protected function eeeexecute(InputInterface $input, OutputInterface $output): int
+	{
+		$this->output  = &$output;
+		$this->input   = &$input;
+		$this->Options = new Options();
+		$this->beforeExecute();
+		
+		
+		$this->afterExecute();
 		
 		return $this->success();
 	}
@@ -148,6 +216,10 @@ class DbViews extends SmurfCommand
 			}
 		}
 	}
+	
+	protected function beforeExecute_Models() { }
+	
+	protected function beforeExecute_Views() { }
 }
 
 ?>
