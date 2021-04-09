@@ -91,8 +91,6 @@ class Entries
 			{
 				define($setDefinition, $value);
 			}
-			
-			return null;
 		}
 		
 		return self::get($name);
