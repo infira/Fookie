@@ -103,7 +103,7 @@ trait PoesisDataMethodsExtendor
 		$List->setIDField($IDField);
 		if ($this->rowParserCallback)
 		{
-			$List->setRowParser($this->rowParserCallback, $this->rowParserScope);
+			$List->setRowParser($this->rowParserCallback);
 		}
 		$List->construct();
 		
@@ -131,7 +131,7 @@ trait PoesisDataMethodsExtendor
 		$List = $this->getAllAsClass("\Infira\Farray\Callback");
 		if ($this->rowParserCallback)
 		{
-			$List->setCallback($this->rowParserCallback, ($this->rowParserArguments ? $this->rowParserArguments : []), $this->rowParserScope);
+			$List->setCallback($this->rowParserCallback, ($this->rowParserArguments ? $this->rowParserArguments : []));
 		}
 		
 		return $List;
