@@ -9,6 +9,7 @@ use Infira\Fookie\facade\Variable;
 use Infira\Fookie\Fookie;
 use stdClass;
 use Infira\Fookie\facade\Db;
+use Infira\Fookie\controller\Controller;
 
 class Route
 {
@@ -255,27 +256,44 @@ class Route
 		{
 			$controllerMethodArguments = [];
 		}
-		$controllerName = self::$RouteNode->controller;
+		$controllerName = self::getControllerName();
 		addExtraErrorInfo("currentControllerName", $controllerName);
 		$methodName = self::$RouteNode->controllerMethod;
-		$Controller = new $controllerName();
-		$Controller->validate();
 		
+		$Controller = self::getController();
+		$Controller->authorize();
+		
+		if (!method_exists($Controller, "validate"))
+		{
+			Payload::sendError('Controller must contain validate method');
+		}
+		
+		if (!$Controller->validate())
+		{
+			Payload::set(null);
+			
+			return;
+		}
 		if (Payload::haveError())
 		{
 			//
 		}
 		elseif (method_exists($Controller, $methodName))
 		{
+			if (method_exists($Controller, 'beforeAction'))
+			{
+				$Controller->beforeAction(...$controllerMethodArguments);
+			}
 			$actionResult = $Controller->$methodName(...$controllerMethodArguments);
+			if (method_exists($Controller, 'resultParser'))
+			{
+				$actionResult = $Controller->resultParser($actionResult);
+			}
 			Payload::set($actionResult);
 		}
 		else
 		{
-			if (AppConfig::isLiveENV())
-			{
-				Payload::setError("$controllerName->$methodName does not exists");
-			}
+			Payload::sendError("$controllerName->$methodName does not exists");
 		}
 	}
 	
@@ -326,9 +344,16 @@ class Route
 		return self::$RouteNode->role == $checkRole;
 	}
 	
-	public static function getController()
+	public static function getControllerName(): string
 	{
 		return self::$RouteNode->controller;
+	}
+	
+	public static function getController(): Controller
+	{
+		$cn = self::getControllerName();
+		
+		return new $cn();
 	}
 	
 	public static function getControllerMethod(): string

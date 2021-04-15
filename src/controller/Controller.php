@@ -18,49 +18,36 @@ abstract class Controller extends \Infira\Utils\MagicClass
 {
 	private $authRequired       = false;
 	private $allowOnlyDevAccess = false;
-	private $constructorCalled  = false;
 	
 	public function __construct()
 	{
-		$this->constructorCalled = true;
-		if (Http::getGET("showSID"))
-		{
-			debug(Session::getSID());
-		}
-		if (Http::getGET("debugSession"))
-		{
-			debug(Session::get());
-		}
-		if (!Http::isAjax() && Http::existsGET("showRoute"))
-		{
-			debug(Route::getName());
-		}
-	}
-	
-	/**
-	 * Ghot method to enuse called contoller exteds this class
-	 */
-	public function validate(): bool
-	{
-		if (!$this->constructorCalled)
-		{
-			Payload::setError(get_class($this) . ' __construct must be initialized');
-		}
-		elseif ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
-		{
-			Payload::setError("oly dev envinronment can access this controller");
-		}
-		elseif ($this->authRequired === true and !$this->isUserAuthotized())
-		{
-			$this->onAuthRequired();
-		}
-		
 		return true;
 	}
 	
+	public final function authorize()
+	{
+		if ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
+		{
+			Payload::sendError("oly dev envinronment can access this controller");
+		}
+		elseif ($this->authRequired === true and !$this->isAccessAllowed())
+		{
+			$this->onAuthRequired();
+		}
+	}
+	
+	public function validate(): bool
+	{
+		return true;
+	}
+	
+	public function beforeAction() { }
+	
+	public function resultParser($res) { return $res; }
+	
 	protected function onAuthRequired()
 	{
-		Payload::setError("auth requierd");
+		Payload::sendError("auth requierd");
 	}
 	
 	public final function requireAuth(bool $require)
@@ -77,7 +64,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 		$this->allowOnlyDevAccess = true;
 	}
 	
-	protected function isUserAuthotized(): bool
+	protected function isAccessAllowed(): bool
 	{
 		return false;
 	}
