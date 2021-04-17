@@ -118,47 +118,27 @@ class Payload
 	
 	public static function getOutput(): string
 	{
-		if (self::$plainPoutput)
+		$dataField = 'payload';
+		if (self::haveError())
 		{
-			if (self::haveError())
-			{
-				$output = self::$data['error'];
-			}
-			else
-			{
-				$output = self::$data['payload'];
-			}
-		}
-		else
-		{
-			$output = self::$data;
+			$dataField = 'error';
 		}
 		if (Http::acceptJSON() or self::$outputsJSON)
 		{
 			self::setJSONHeader();
-			if (self::haveError())
-			{
-				if (self::$plainPoutput)
-				{
-					$output = strip_tags($output, '<br>');
-				}
-				else
-				{
-					$output['error'] = strip_tags($output['error'], '<br>');
-				}
-			}
+			self::$data[$dataField] = strip_tags(self::$data[$dataField], '<br>');
 		}
 		
 		if (self::$outputsJSON)
 		{
-			return json_encode($output);
+			return json_encode(self::$data);
 		}
-		if (self::$plainPoutput)
+		elseif (self::$plainPoutput and !self::haveError())
 		{
-			return $output;
+			return self::$data['payload'];
 		}
 		
-		return pre(dump($output));
+		return pre(dump(self::$data));
 	}
 }
 
