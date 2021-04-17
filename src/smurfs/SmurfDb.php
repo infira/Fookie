@@ -165,24 +165,6 @@ class SmurfDb extends SmurfCommand
 				$this->message('<info>generated model: </info>' . $file);
 			}
 		}
-		
-		
-		return $this->success();
-	}
-	
-	/**
-	 * @param InputInterface  $input
-	 * @param OutputInterface $output
-	 * @return int
-	 */
-	protected function eeeexecute(InputInterface $input, OutputInterface $output): int
-	{
-		$this->output  = &$output;
-		$this->input   = &$input;
-		$this->Options = new Options();
-		$this->beforeExecute();
-		
-		
 		$this->afterExecute();
 		
 		return $this->success();
