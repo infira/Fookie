@@ -116,7 +116,7 @@ class Payload
 		self::$plainPoutput = true;
 	}
 	
-	public static function getOutput(): string
+	public static function getOutput(): ?string
 	{
 		$dataField = 'payload';
 		if (self::haveError())
