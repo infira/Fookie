@@ -2,9 +2,9 @@
 
 namespace Infira\Fookie\request;
 
-use AppConfig;
 use Infira\Utils\Http;
 use Infira\Utils\Is;
+use AppConfig;
 
 class Payload
 {
@@ -12,12 +12,12 @@ class Payload
 	private static $plainPoutput = false;
 	private static $outputsJSON  = false;
 	
-	public static function setField($name, $value)
+	public static function setField(string $name, $value)
 	{
 		self::$data[$name] = $value;
 	}
 	
-	protected static function getField($name, $returnOnNotFound = null)
+	protected static function getField(string $name, $returnOnNotFound = null)
 	{
 		if (!self::existsField($name))
 		{
@@ -27,7 +27,7 @@ class Payload
 		return self::$data[$name];
 	}
 	
-	protected static function existsField($name)
+	protected static function existsField(string $name): bool
 	{
 		return array_key_exists($name, self::$data);
 	}
@@ -39,6 +39,7 @@ class Payload
 	
 	public static function setError($error, $errorID = null)
 	{
+		http_response_code(400);
 		if (Is::isClass($error, 'Infira\Error\Error'))
 		{
 			foreach ((array)$error->getStack() as $name => $val)
@@ -67,20 +68,25 @@ class Payload
 	
 	/**
 	 * Exits the code and outputs data
-	 *
-	 * @return mixed|null
 	 */
 	public static function sendError(string $msg)
 	{
 		self::setError($msg);
-		
+		self::send();
+	}
+	
+	/**
+	 * Send output to browser immediately
+	 */
+	public static function send()
+	{
 		echo self::getOutput();
 		exit;
 	}
 	
-	public static function haveError()
+	public static function haveError(): bool
 	{
-		return (self::getField("error")) ? true : false;
+		return (bool)self::getField("error");
 	}
 	
 	public static function setJSONHeader()
@@ -96,10 +102,6 @@ class Payload
 	
 	public static function set($data)
 	{
-		if (self::haveError())
-		{
-			return true;
-		}
 		self::setField("payload", $data);
 	}
 	
@@ -118,27 +120,33 @@ class Payload
 	
 	public static function getOutput(): ?string
 	{
-		$dataField = 'payload';
-		if (self::haveError())
-		{
-			$dataField = 'error';
-		}
 		if (Http::acceptJSON() or self::$outputsJSON)
 		{
 			self::setJSONHeader();
-			self::$data[$dataField] = strip_tags(self::$data[$dataField], '<br>');
+			if (self::haveError())
+			{
+				self::$data['error'] = strip_tags(self::$data['error'], '<br>');
+			}
+		}
+		$output = self::$data;
+		if (self::$plainPoutput)
+		{
+			if (!self::haveError())
+			{
+				$output = self::$data['payload'];
+			}
 		}
 		
 		if (self::$outputsJSON)
 		{
-			return json_encode(self::$data);
+			return json_encode($output);
 		}
-		elseif (self::$plainPoutput and !self::haveError())
+		if (is_string($output))
 		{
-			return self::$data['payload'];
+			return $output;
 		}
 		
-		return pre(dump(self::$data));
+		return pre(dump($output));
 	}
 }
 

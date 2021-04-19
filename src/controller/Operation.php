@@ -4,6 +4,7 @@ namespace Infira\Fookie\controller;
 
 use Infira\Utils\Http;
 use AppConfig;
+use Db;
 
 class Operation extends Controller
 {
@@ -37,19 +38,11 @@ class Operation extends Controller
 		exit(AppConfig::getENV());
 	}
 	
-	public function shortUrl()
-	{
-		$Db = new TShortUrl();
-		$Db->ID(Http::getGET("path"));
-		$path = $Db->select("path")->getFieldValue("path", "");
-		Http::go301(Path::toUrl($path));
-	}
-	
 	public function viewLog()
 	{
 		if (Http::getGET("hash") == "1a74df14" && Http::existsGET("ID"))
 		{
-			$Db       = new TLog();
+			$Db       = Db::TLog();
 			$logRowID = Http::getGET("ID");
 			if ($logRowID == "last")
 			{

@@ -14,7 +14,7 @@ class Entries
 	 * @param string $name
 	 * @return mixed
 	 */
-	public final static function get($name)
+	public final static function get(string $name)
 	{
 		if (array_key_exists($name, self::$entries))
 		{
@@ -25,69 +25,15 @@ class Entries
 			return self::$defaultValues[$name];
 		}
 		
-		return false;
+		return null;
 	}
 	
-	public final static function setGetVar($name, $value = null, $fixWidth = false, $setDefinition = false)
+	public final static function setGetVar(string $name, $value = null, string $setDefinition = null)
 	{
 		if ($value !== null)
 		{
-			if ($fixWidth !== false)
-			{
-				foreach (explode(",", $fixWidth) as $fixW)
-				{
-					if ($fixW == "float")
-					{
-						$value = floatval($value);
-					}
-					elseif ($fixW == "int")
-					{
-						$value = intval($value);
-					}
-					elseif ($fixW == "bool")
-					{
-						$value = (boolean)$value;
-					}
-					elseif ($fixW == "object")
-					{
-						$value = (object)$value;
-					}
-					elseif ($fixW == "function")
-					{
-						$value = $value;
-					}
-					elseif ($fixW == "array")
-					{
-						if (is_string($value))
-						{
-							$ex     = explode(",", $value);
-							$newArr = [];
-							if (count($ex) > 0)
-							{
-								foreach ($ex as $key => $val)
-								{
-									$val = trim($val);
-									if ($val)
-									{
-										$newArr[$key] = $val;
-									}
-								}
-							}
-							$value = $newArr;
-						}
-					}
-					elseif ($fixW == "lower")
-					{
-						$value = strtolower($value);
-					}
-					else
-					{
-						$value = trim($value);
-					}
-				}
-			}
 			self::$entries[$name] = $value;
-			if ($setDefinition !== false)
+			if ($setDefinition)
 			{
 				define($setDefinition, $value);
 			}
@@ -96,12 +42,12 @@ class Entries
 		return self::get($name);
 	}
 	
-	public final static function addDefaultValue($name, $value)
+	public final static function addDefaultValue(string $name, $value)
 	{
 		self::$defaultValues[$name] = $value;
 	}
 	
-	public final static function isSetted($name)
+	public final static function isSetted(string $name): bool
 	{
 		if (array_key_exists($name, self::$entries))
 		{
@@ -114,3 +60,5 @@ class Entries
 		return false;
 	}
 }
+
+?>

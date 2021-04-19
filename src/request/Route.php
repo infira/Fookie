@@ -176,6 +176,11 @@ class Route
 		}
 		$controllerMethodArguments = [];
 		$contentType               = '';
+		
+		if (Http::existsGET("ajaxMethodArguments"))
+		{
+			$controllerMethodArguments = array_merge($controllerMethodArguments, Variable::toArray(json_decode(Http::getGET("ajaxMethodArguments"))));
+		}
 		if (isset($_SERVER["CONTENT_TYPE"]) and preg_match('%application/json%', $_SERVER["CONTENT_TYPE"]))
 		{
 			$contentType = $_SERVER["CONTENT_TYPE"];
@@ -189,9 +194,9 @@ class Route
 				
 				$requestPayload = Variable::apply((object)[], $requestPayload, ["ajaxMethodArguments" => null]);
 				
-				if ($requestPayload->ajaxMethodArguments)
+				if (checkArray($requestPayload->ajaxMethodArguments))
 				{
-					$controllerMethodArguments = $requestPayload->ajaxMethodArguments;
+					$controllerMethodArguments = array_merge($controllerMethodArguments, $requestPayload->ajaxMethodArguments);
 				}
 				unset($requestPayload->ajaxMethodArguments);
 				
@@ -199,11 +204,11 @@ class Route
 				{
 					Http::setPOST($name, $val);
 				}
-				if (Http::existsPOST("ajaxMethodArguments"))
-				{
-					$controllerMethodArguments = array_merge(Variable::toArray(Http::getPOST("ajaxMethodArguments"), $controllerMethodArguments));
-				}
 			}
+		}
+		if (Http::existsPOST("ajaxMethodArguments"))
+		{
+			$controllerMethodArguments = array_merge($controllerMethodArguments, Variable::toArray(Http::getPOST("ajaxMethodArguments")));
 		}
 		
 		if (Http::existsGET('_rid') and AppConfig::saveRequests())

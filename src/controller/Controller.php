@@ -28,7 +28,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	{
 		if ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
 		{
-			Payload::sendError("oly dev envinronment can access this controller");
+			Payload::sendError("oly dev environment can access this controller");
 		}
 		elseif ($this->authRequired === true and !$this->isAccessAllowed())
 		{
@@ -57,7 +57,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	
 	
 	/**
-	 * Set current controller to access only with dev envinronment
+	 * Set current controller to access only with dev environment
 	 */
 	protected function allowOnlyDevAccess()
 	{

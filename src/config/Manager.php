@@ -47,9 +47,9 @@ abstract class Manager
 		alert("Config : you trying to call config function $name but this not exists or is depreacated");
 	}
 	
-	protected static function setGetVar($name, $value = null, $fixWidth = false, $setDefinition = false)
+	protected static function setGetVar($name, $value = null, string $setDefinition = null)
 	{
-		return ConfigEntries::setGetVar($name, $value, $fixWidth, $setDefinition);
+		return ConfigEntries::setGetVar($name, $value, $setDefinition);
 	}
 	
 	/**
@@ -91,83 +91,82 @@ abstract class Manager
 		define("DB_LOG_HOST", trim($host));
 	}
 	
-	public final static function redisConnection($connection = null)
+	public final static function redisConnection(array $connection = null): ?array
 	{
-		return self::setGetVar("redisConnection", $connection, "array");
+		return self::setGetVar("redisConnection", $connection);
 	}
 	
-	public final static function defaultDbCacheDriver($implementer = null)
+	public final static function defaultDbCacheDriver(string $implementer = null): ?string
 	{
 		if (!in_array($implementer, ["mem", "sess", "redis", null]))
 		{
 			exit("AppConfig->dbCahceDriver undefined cache implementer = $implementer");
 		}
 		
-		return self::setGetVar("dbCahceDriver", $implementer, "string");
+		return self::setGetVar("dbCahceDriver", $implementer);
 	}
 	
-	public final static function defaultCacheDriver($implementer = null)
+	public final static function defaultCacheDriver(string $implementer = null): ?string
 	{
 		if (!in_array($implementer, ["mem", "sess", "redis", null]))
 		{
 			exit("AppConfig->defaultCacheDriver undefined cache implementer = $implementer");
 		}
 		
-		return self::setGetVar("defaultCacheDriver", $implementer, "string");
+		return self::setGetVar("defaultCacheDriver", $implementer);
 	}
 	
 	/**
 	 * Log SQL Query history to database
 	 *
-	 * @param string $type [sel,ins,rep,del,upd,set]
+	 * @param array|null $type [sel,ins,rep,del,upd,set]
 	 * @return mixed|null
 	 */
-	public final static function logSQLQueryHistory($type = null)
+	public final static function logSQLQueryHistory(array $type = null): ?array
 	{
-		return self::setGetVar("logSQLQueryHistory", $type, "array");
+		return (string)self::setGetVar("logSQLQueryHistory", $type);
 	}
 	
-	public final static function haltLogSQLQueryHistory($type = null)
+	public final static function haltLogSQLQueryHistory(bool $state = null): bool
 	{
-		return self::setGetVar("haltLogSQLQueryHistory", $type, "bool");
+		return (bool)self::setGetVar("haltLogSQLQueryHistory", $state);
 	}
 	
 	/**
-	 * Set developer email, for sendind errors, and logs etc
+	 * Set developer email, for sending errors, and logs etc
 	 *
-	 * @param array $arr - array(name,email)
-	 * @return Ambigous <NULL, mixed, boolean>
+	 * @param array|null $array
+	 * @return array|null
 	 */
-	public final static function developerEmail($array = null)
+	public final static function developerEmail(array $array = null): ?array
 	{
-		return self::setGetVar("developerEmail", $array, "array");
+		return self::setGetVar("developerEmail", $array);
 	}
 	
-	public final static function projectName($name = null)
+	public final static function projectName(string $name = null): ?string
 	{
-		return self::setGetVar("projectName", $name, "string", "PROJECT_NAME");
+		return self::setGetVar("projectName", $name, "PROJECT_NAME");
 	}
 	
 	/**
 	 * Session timeout in seconds
 	 *
-	 * @param null $time
-	 * @return Ambigous <NULL, mixed, boolean>
+	 * @param int|null $time
 	 */
-	public final static function sessionTimeout($time = null)
+	public final static function sessionTimeout(int $time = null): ?int
 	{
-		return self::setGetVar("sessionTimeOut", $time, "int", "SESSION_TIMEOUT");
+		return self::setGetVar("sessionTimeOut", $time, "SESSION_TIMEOUT");
 	}
 	
 	/**
 	 * Vod logging on these db tables
 	 *
-	 * @param array $array - array of tables or string of tables separated by commas
-	 * @return Ambigous <NULL, mixed, boolean>
+	 * @param array|null $array $array - array of tables or string of tables separated by commas
+	 * @return array
 	 */
-	public final static function voidDbTablesLog(array $array = null)
+	public final static function voidDbTablesLog(array $array = null): array
 	{
-		return self::setGetVar("voidDbTablesLog", $array, "array");
+		return (array)self::setGetVar("voidDbTablesLog", $array);
 	}
 	
 	/**
@@ -176,72 +175,72 @@ abstract class Manager
 	 * @param bool $bool
 	 * @return bool
 	 */
-	public final static function dbLoggerEnabled(bool $bool = null)
+	public final static function dbLoggerEnabled(bool $bool = null): bool
 	{
-		return self::setGetVar("dbLoggerEnabled", $bool, "bool");
+		return (bool)self::setGetVar("dbLoggerEnabled", $bool);
 	}
 	
 	/**
 	 * Default route role
 	 *
-	 * @param string $var
-	 * @return bool
+	 * @param string|null $role
+	 * @return string
 	 */
-	public final static function routeDefaultRole(string $var = null)
+	public final static function routeDefaultRole(string $role = null): string
 	{
-		return self::setGetVar("routeDefault", $var, "string");
+		return (string)self::setGetVar("routeDefault", $role);
 	}
 	
 	/**
 	 * Default route role
 	 *
-	 * @param string $var
-	 * @return bool
+	 * @param string|null $route
+	 * @return string
 	 */
-	public final static function routeCurrent(string $var = null)
+	public final static function routeCurrent(string $route = null): string
 	{
-		return self::setGetVar("routeCurrent", $var, "string");
+		return (string)self::setGetVar("routeCurrent", $route);
 	}
 	
 	/**
 	 * Save requests
 	 *
-	 * @param bool|null $bool
+	 * @param bool $bool
 	 * @return bool
 	 */
-	public final static function saveRequests(bool $bool = null)
+	public final static function saveRequests(bool $bool = null): bool
 	{
-		return self::setGetVar("saveRequests", $bool, "string");
+		return (bool)self::setGetVar("saveRequests", $bool);
 	}
 	
 	/**
 	 * Default route role
 	 *
-	 * @param string $array
-	 * @return bool
+	 * @param array|null $array $array
+	 * @return array|null
 	 */
-	public final static function routeRoles(array $array = null)
+	public final static function routeRoles(array $array = null): ?array
 	{
-		return self::setGetVar("routeRoles", $array, "array");
+		return (array)self::setGetVar("routeRoles", $array);
 	}
 	
 	/**
 	 * Set db tables to  void install db class
 	 *
-	 * @param string $array
-	 * @return bool
+	 * @param array|null $array $array
+	 * @return array|null
 	 */
-	public final static function voidDbTableClassInstall(array $array = null)
+	public final static function voidDbTableClassInstall(array $array = null): array
 	{
-		return self::setGetVar("voidDbTableClassInstall", $array, "array");
+		return (array)self::setGetVar("voidDbTableClassInstall", $array);
 	}
 	
 	/**
-	 * get envinronment
+	 * get environment
 	 *
 	 * @return string
 	 */
-	abstract public static function getENV();
+	abstract public static function getENV(): string;
 	
 	/**
 	 * Check is current environment
@@ -249,21 +248,21 @@ abstract class Manager
 	 * @param string|array $env
 	 * @return bool
 	 */
-	abstract public static function isENV($env);
+	abstract public static function isENV($env): bool;
 	
 	/**
-	 * Check is current envinronment live
+	 * Check is current environment live
 	 *
 	 * @return bool
 	 */
-	abstract public static function isLiveENV();
+	abstract public static function isLiveENV(): bool;
 	
 	/**
-	 * Check is current envinronment dev
+	 * Check is current environment dev
 	 *
 	 * @return bool
 	 */
-	abstract public static function isDevENV();
+	abstract public static function isDevENV(): bool;
 }
 
 ?>
