@@ -117,22 +117,6 @@ abstract class Manager
 	}
 	
 	/**
-	 * Log SQL Query history to database
-	 *
-	 * @param array|null $type [sel,ins,rep,del,upd,set]
-	 * @return mixed|null
-	 */
-	public final static function logSQLQueryHistory(array $type = null): ?array
-	{
-		return (string)self::setGetVar("logSQLQueryHistory", $type);
-	}
-	
-	public final static function haltLogSQLQueryHistory(bool $state = null): bool
-	{
-		return (bool)self::setGetVar("haltLogSQLQueryHistory", $state);
-	}
-	
-	/**
 	 * Set developer email, for sending errors, and logs etc
 	 *
 	 * @param array|null $array
