@@ -18,7 +18,7 @@
 	  "Infira\\Fookie\\helper\\": "src/helper",
 	  "Infira\\Fookie\\request\\": "src/request",
 	  "Infira\\Fookie\\Smurf\\": "src/smurfs",
-	  "Infira\\Fookie\\openapi\\": "src/openapi",
+	  "Infira\\Fookie\\OpenAPI\\": "src/openapi",
 	  "Infira\\Fookie\\": "src/"
 	}
   },
