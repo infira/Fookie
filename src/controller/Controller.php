@@ -3,9 +3,6 @@
 namespace Infira\Fookie\controller;
 
 use Infira\Utils\ClassFarm;
-use Infira\Utils\Http;
-use Infira\Fookie\request\Route;
-use Infira\Fookie\facade\Session;
 use AppConfig;
 use Infira\Fookie\request\Payload;
 
@@ -67,6 +64,11 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	protected function isAccessAllowed(): bool
 	{
 		return false;
+	}
+	
+	public function getActionArguments(): array
+	{
+		return [];
 	}
 }
 

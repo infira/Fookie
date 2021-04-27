@@ -6,16 +6,16 @@ use Infira\Utils\Http;
 use AppConfig;
 use Path;
 use Infira\Fookie\facade\Variable;
-use Infira\Fookie\Fookie;
 use stdClass;
 use Infira\Fookie\facade\Db;
 use Infira\Fookie\controller\Controller;
 
 class Route
 {
-	private        $route;
-	private static $routes  = [];
-	private static $options = [];
+	private static $requestID  = null;
+	private static $routes     = [];
+	private static $options    = [];
+	private static $matchTypes = [];
 	
 	/**
 	 * @var AltoRouterExtendor
@@ -44,6 +44,7 @@ class Route
 			return (object)['controller' => $operationController, 'method' => 'handle'];
 		});
 		self::blockHTTPOrigin("chrome-extension://aegnopegbbhjeeiganiajffnalhlkkjb"); //it causes lots of _post requests to server it is that plugin https://chrome.google.com/webstore/detail/browser-safety/aegnopegbbhjeeiganiajffnalhlkkjb
+		self::setMatchType('entity', '[A-Za-z]++');
 	}
 	
 	public static function getRequestUrl()
@@ -64,6 +65,26 @@ class Route
 		}
 		
 		return $url;
+	}
+	
+	public static function saveRequestResponse($response)
+	{
+		if (AppConfig::saveRequests())
+		{
+			$config = AppConfig::saveRequests();
+			$model  = $config['model'];
+			$db     = new $model();
+			$db->Where->ID(self::$requestID);
+			if (is_array($response) or is_object($response))
+			{
+				$db->response->compress(json_encode($response));
+			}
+			else
+			{
+				$db->response->compress($response);
+			}
+			$db->update();
+		}
 	}
 	
 	public static function match(): bool
@@ -87,6 +108,7 @@ class Route
 			{
 				$target       = new stdClass();
 				$target->role = $roleName;
+				$target->path = $Route->path;
 				if (is_string($Route->controller))
 				{
 					$ex                 = explode("#", $Route->controller);
@@ -120,11 +142,12 @@ class Route
 		}
 		$requestUrlRoute = self::getRequestUrl();
 		$match           = self::$Alto->match($requestUrlRoute);
+		//debug(['$match' => $match]);
 		if (!$match)
 		{
 			if (!in_array(Http::getRequestMethod(), ["propfind", "options", "option"]))
 			{
-				if (!AppConfig::isLiveENV())
+				if (!AppConfig::isLocalENV())
 				{
 					Payload::setField("requestUrlRoute", $requestUrlRoute);
 					Payload::setField("trace", getTrace());
@@ -138,6 +161,7 @@ class Route
 		{
 			$match = (object)$match;
 			addExtraErrorInfo("routeMatch", $match);
+			self::$RouteNode->rawPath          = $match->target->path;
 			self::$RouteNode->controller       = $match->target->controller;
 			self::$RouteNode->controllerMethod = $match->target->method;
 			self::$RouteNode->name             = $match->name;
@@ -161,6 +185,8 @@ class Route
 			//Set router data
 			self::$RouteNode->controller       = $match->target->controller;
 			self::$RouteNode->controllerMethod = $match->target->method;
+			self::$RouteNode->target           = $match->target;
+			self::$RouteNode->params           = $match->params;
 			self::$RouteNode->matched          = true;
 		}
 		Prof()->stopTimer("Route::detect");
@@ -211,43 +237,26 @@ class Route
 			$controllerMethodArguments = array_merge($controllerMethodArguments, Variable::toArray(Http::getPOST("ajaxMethodArguments")));
 		}
 		
-		if (Http::existsGET('_rid') and AppConfig::saveRequests())
+		if (AppConfig::saveRequests())
 		{
-			$ID = Http::getGET('_rid');
-			$Db = Db::TSavedRequest();
-			$Db->ID($ID);
-			$Db->methodArguments->serialize($controllerMethodArguments);
-			$Db->post->serialize(Http::getPOST());
-			$Db->method($_SERVER['REQUEST_METHOD']);
-			$Db->uri($_SERVER['REQUEST_URI']);
-			$Db->insert();
-			$currentUrl = Http::getCurrentUrl();
-			if (preg_match('/_rid/', $currentUrl))
-			{
-				$repLink = str_replace('_rid', '_rrid', $currentUrl);
-			}
-			else
-			{
-				if (strpos($currentUrl, '?') !== false)
-				{
-					$repLink = $currentUrl . '&_rrid=' . $ID;
-				}
-				else
-				{
-					$repLink = $currentUrl . '?_rrid=' . $ID;
-				}
-			}
-			addExtraErrorInfo('errorReplicateLink', $repLink);
-			Payload::setField('repLink', $repLink);
-			Payload::setField('repID', Http::getGET('_rid'));
+			$config = AppConfig::saveRequests();
+			$model  = $config['model'];
+			$db     = new $model();
+			$db->methodArguments->json($controllerMethodArguments);
+			$db->request->compress(json_encode(Http::getPOST()));
+			$db->method($_SERVER['REQUEST_METHOD']);
+			$db->uri($_SERVER['REQUEST_URI']);
+			$db->insert();
+			self::$requestID = $db->getLastSaveID();
+			Payload::setRequestID(self::$requestID);
 		}
 		
 		
 		if (Http::existsGET('_rrid') and AppConfig::saveRequests())
 		{
-			$Db = Db::TSavedRequest();
-			$Db->ID(Http::getGET('_rrid'));
-			$req                       = $Db->select()->getObject();
+			$db = Db::TSavedRequest();
+			$db->ID(Http::getGET('_rrid'));
+			$req                       = $db->select()->getObject();
 			$controllerMethodArguments = unserialize($req->methodArguments);
 			$post                      = unserialize($req->post);
 			addExtraErrorInfo('saved$req', $req);
@@ -287,9 +296,10 @@ class Route
 		{
 			if (method_exists($Controller, 'beforeAction'))
 			{
-				$Controller->beforeAction(...$controllerMethodArguments);
+				$Controller->beforeAction();
 			}
-			$actionResult = $Controller->$methodName(...$controllerMethodArguments);
+			$controllerMethodArguments = array_merge($controllerMethodArguments, $Controller->getActionArguments());
+			$actionResult              = $Controller->$methodName(...$controllerMethodArguments);
 			if (method_exists($Controller, 'resultParser'))
 			{
 				$actionResult = $Controller->resultParser($actionResult);
@@ -319,8 +329,13 @@ class Route
 		self::$routes[$role][$name] = (object)['method' => trim($requestMethod), 'path' => trim($requestPath), 'controller' => $controller];
 	}
 	
-	public static function setMatchType($name, $expression)
+	public static function setMatchType(string $name, string $expression)
 	{
+		if (array_key_exists($name, self::$matchTypes))
+		{
+			alert("Match type already defined");
+		}
+		self::$matchTypes[$name] = $expression;
 		self::$Alto->addMatchTypes([$name => $expression]);
 	}
 	
@@ -332,6 +347,32 @@ class Route
 	public static function getPath()
 	{
 		return self::$RouteNode->path;
+	}
+	
+	public static function getParams(): array
+	{
+		return self::$RouteNode->params;
+	}
+	
+	public static function getRawPath()
+	{
+		return self::$RouteNode->rawPath;
+	}
+	
+	/**
+	 * Entitites replaces with real values
+	 *
+	 * @return string
+	 */
+	public static function getPathStatement(): string
+	{
+		$path = self::$RouteNode->rawPath;
+		foreach (self::$RouteNode->params as $name => $value)
+		{
+			$path = str_replace("[entity:$name]", $value, $path);
+		}
+		
+		return $path;
 	}
 	
 	public static function getRoute()

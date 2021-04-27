@@ -4,6 +4,8 @@ namespace Infira\Fookie;
 
 class Log
 {
+	private static $userID = 0;
+	
 	/**
 	 * Log event
 	 *
@@ -15,12 +17,7 @@ class Log
 	{
 		$Db = new \TLog();
 		$Db->event($title);
-		$userID = 0;
-		if (defined("__USER_ID"))
-		{
-			$userID = __USER_ID;
-		}
-		$Db->userID = $userID;
+		$Db->userID = self::$userID;
 		if (isSerializable($content))
 		{
 			$Db->isSerialized = 1;
@@ -67,6 +64,11 @@ class Log
 				debug($Obj->content);
 			}
 		}
+	}
+	
+	public static function setUserID(int $userID): void
+	{
+		self::$userID = $userID;
 	}
 }
 

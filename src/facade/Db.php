@@ -5,7 +5,7 @@ namespace Infira\Fookie\facade;
 /**
  * Class Db
  * @method static null close()
- * @method static \Infira\Poesis\dr\DataRetrieval dr(string $query)
+ * @method static \Infira\Poesis\dr\DataMethods dr(string $query)
  * @method static mysqli_result query(string $query)
  * @method static bool realQuery(string $query)
  * @method static void multiQuery(string $query, callable|bool $callback)

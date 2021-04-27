@@ -5,19 +5,59 @@ namespace Infira\Fookie\request;
 use Infira\Utils\Http;
 use Infira\Utils\Is;
 use AppConfig;
+use Infira\Fookie\facade\Variable;
 
 class Payload
 {
-	private static $data         = ["payload" => null];
+	private static $data         = [];
+	private static $root         = 'payload';
+	private static $payload      = null;
+	private static $error        = [];
 	private static $plainPoutput = false;
 	private static $outputsJSON  = false;
+	
+	/**
+	 * @var callable
+	 */
+	private static $beforSend = null;
+	
+	public static function setBeforSend(callable $beforSend): void
+	{
+		self::$beforSend = $beforSend;
+	}
+	
+	public static function setRoot(?string $name)
+	{
+		self::$root = $name;
+	}
+	
+	public static function setHeader($header)
+	{
+		header($header);
+	}
+	
+	public static function setCustomHeader(string $name, string $value)
+	{
+		self::setHeader('X-' . $name . ': ' . $value);
+	}
+	
+	public static function setRequestID(int $ID)
+	{
+		self::setCustomHeader('requestID', (string)$ID);
+	}
+	
+	public static function setJSONHeader()
+	{
+		self::setHeader('Content-Type: application/json');
+		self::$outputsJSON = true;
+	}
 	
 	public static function setField(string $name, $value)
 	{
 		self::$data[$name] = $value;
 	}
 	
-	protected static function getField(string $name, $returnOnNotFound = null)
+	public static function getField(string $name, $returnOnNotFound = null)
 	{
 		if (!self::existsField($name))
 		{
@@ -27,82 +67,79 @@ class Payload
 		return self::$data[$name];
 	}
 	
-	protected static function existsField(string $name): bool
+	public static function existsField(string $name): bool
 	{
 		return array_key_exists($name, self::$data);
 	}
 	
-	public static function setConsoleError($error)
+	public static function sendError($error, string $code = null, $httpStatusCode = 400)
 	{
-		self::setField("__consoleError", $error);
-	}
-	
-	public static function setError($error, $errorID = null)
-	{
-		http_response_code(400);
+		http_response_code($httpStatusCode);
+		if (!$code)
+		{
+			$code = 'general';
+		}
+		self::$error['error'] = $code;
 		if (Is::isClass($error, 'Infira\Error\Error'))
 		{
+			$convert = ['msg' => 'message', 'title' => 'code'];
 			foreach ((array)$error->getStack() as $name => $val)
 			{
-				if ($name == 'msg')
+				if (isset($convert[$name]))
 				{
-					$name = 'error';
+					$name = $convert[$name];
 				}
-				self::setField($name, $val);
+				self::$error[$name] = $val;
 			}
+		}
+		elseif (is_string($error))
+		{
+			self::$error['message'] = $error;
 		}
 		else
 		{
-			self::setField("error", $error);
+			self::$error['message'] = $error;
 		}
-		if ($errorID)
+		foreach (self::$data as $k => $v)
 		{
-			self::setField("errorLink", Route::getOperationLink(['opName' => 'viewErrorLog', 'hash' => 'a12g3fs14g3d5h36gk56hilasd3a', 'ID' => $errorID]));
+			self::$error[$k] = $v;
 		}
-	}
-	
-	public static function getError()
-	{
-		return self::getField("error");
-	}
-	
-	/**
-	 * Exits the code and outputs data
-	 */
-	public static function sendError(string $msg)
-	{
-		self::setError($msg);
 		self::send();
 	}
 	
 	/**
-	 * Send output to browser immediately
+	 * @param mixed $payload
 	 */
-	public static function send()
+	public static function send($payload = null)
 	{
+		if ($payload)
+		{
+			self::set($payload);
+		}
+		if (self::$beforSend)
+		{
+			$cb = self::$beforSend;
+			$cb();
+		}
 		echo self::getOutput();
 		exit;
 	}
 	
 	public static function haveError(): bool
 	{
-		return (bool)self::getField("error");
+		return (bool)self::$error;
 	}
 	
-	public static function setJSONHeader()
+	public static function set($payload)
 	{
-		self::setHeader('Content-Type: application/json');
-		self::$outputsJSON = true;
-	}
-	
-	public static function setHeader($header)
-	{
-		header($header);
-	}
-	
-	public static function set($data)
-	{
-		self::setField("payload", $data);
+		if (self::$root)
+		{
+			self::setField(self::$root, $payload);
+		}
+		else
+		{
+			self::$payload = $payload;
+		}
 	}
 	
 	public static function setLoadQuery($query)
@@ -125,18 +162,32 @@ class Payload
 			self::setJSONHeader();
 			if (self::haveError())
 			{
-				self::$data['error'] = strip_tags(self::$data['error'], '<br>');
+				self::$error['message'] = str_replace(['<br />', '<br>', '< br>'], "\n", self::$error['message']);
 			}
 		}
-		$output = self::$data;
-		if (self::$plainPoutput)
+		if (self::haveError())
 		{
-			if (!self::haveError())
+			$output = self::$error;
+		}
+		else
+		{
+			if (self::$root === null)
 			{
-				$output = self::$data['payload'];
+				$output = self::$payload;
+			}
+			else
+			{
+				if (self::$plainPoutput)
+				{
+					$output = self::$data[self::$root];
+				}
+				else
+				{
+					$output = self::$data;
+				}
 			}
 		}
-		
+		Route::saveRequestResponse($output);
 		if (self::$outputsJSON)
 		{
 			return json_encode($output);

@@ -189,12 +189,12 @@ abstract class Manager
 	/**
 	 * Save requests
 	 *
-	 * @param bool $bool
-	 * @return bool
+	 * @param array|null $config - ['model'=>'TSavedRequests']
+	 * @return array|null
 	 */
-	public final static function saveRequests(bool $bool = null): bool
+	public final static function saveRequests(array $config = null): ?array
 	{
-		return (bool)self::setGetVar("saveRequests", $bool);
+		return self::setGetVar("saveRequests", $config);
 	}
 	
 	/**

@@ -11,8 +11,6 @@ use Infira\Fookie\facade\Cache;
 use Infira\Poesis\ConnectionManager;
 use Infira\Cachly\options\DbDriverOptions;
 use AppConfig;
-use Infira\Poesis\Poesis;
-use Path;
 
 class Fookie
 {
@@ -40,8 +38,7 @@ class Fookie
 		}
 		else
 		{
-			http_response_code(404);
-			Payload::setError("route not found : " . (string)Route::getRequestUrl());
+			Payload::sendError("route not found",'routeNotFound',404);
 		}
 		$payload = Payload::getOutput();
 		if (self::opt('showProfile'))
@@ -63,12 +60,12 @@ class Fookie
 		Cache::configureDb($dbOptons);
 	}
 	
-	public static function initSession(string $name = 'PHPSESSID')
+	/**
+	 * @param string|null $SID - start session with own id, restore data
+	 * @param string      $name
+	 */
+	public static function initSession(string $SID = null, string $name = 'PHPSESSID')
 	{
-		if (!Route::isMatched())
-		{
-			return false;
-		}
 		$differnetSessionForEachRole = true;
 		if (Fookie::optExists('differnetSessionForEachRole'))
 		{
@@ -83,7 +80,7 @@ class Fookie
 				$name = Http::getGET('_overrideSessionName');
 			}
 		}
-		Session::init($name);
+		Session::init($name, $SID);
 	}
 	
 	public static function initCache()
