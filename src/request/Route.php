@@ -149,7 +149,7 @@ class Route
 		{
 			if (!in_array(Http::getRequestMethod(), ["propfind", "options", "option"]))
 			{
-				if (!AppConfig::isLocalENV())
+				if (!AppConfig::isLiveWorthy())
 				{
 					Payload::setField("requestUrlRoute", $requestUrlRoute);
 					Payload::setField("trace", getTrace());
