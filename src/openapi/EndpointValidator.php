@@ -2,12 +2,8 @@
 
 namespace Infira\Fookie\OpenAPI;
 
-use Http;
-
 class EndpointValidator
 {
-	private $inputType = [];
-	
 	/**
 	 * @var JSONParser
 	 */
@@ -33,16 +29,6 @@ class EndpointValidator
 	public function getPaths(): array
 	{
 		return $this->parser->getPaths();
-	}
-	
-	public function getInputOptions(string $swaggerPath): array
-	{
-		return $this->parser->getInputOptions($swaggerPath, Http::getRequestMethod());
-	}
-	
-	public function setInputType(string $input, string $type)
-	{
-		$this->inputType[$input] = $type;
 	}
 	
 	public function getRequest(string $namespace = ''): Request

@@ -36,49 +36,6 @@ class JSONParser
 		return $this->config;
 	}
 	
-	public function getInputOptions(string $path, string $method): array
-	{
-		$config = $this->config->paths[$path];
-		if (AppConfig::isLocalENV())
-		{
-			$method = array_key_first((array)$config);
-		}
-		if (!isset($config->$method))
-		{
-			alert("config method not found");
-		}
-		$config     = $config->$method;
-		$json       = 'application/json';
-		$properties = [];
-		if (isset($config->requestBody->content->$json->schema))
-		{
-			foreach ((array)$config->requestBody->content->$json->schema as $type => $items)
-			{
-				if ($type == 'allOf')
-				{
-					foreach ($items as $req)
-					{
-						$ref = '$ref';
-						if (isset($req->$ref))
-						{
-							$properties = array_merge($properties, (array)$this->getRefValue($req->$ref)->properties);
-						}
-						if (isset($req->properties))
-						{
-							$properties = array_merge($properties, (array)$req->properties);
-						}
-					}
-				}
-				else
-				{
-					alert("unknown config type");
-				}
-			}
-		}
-		
-		return $properties;
-	}
-	
 	public function getRefValue(string $ref): \stdClass
 	{
 		$ref = str_replace('#/', '', $ref);
