@@ -69,7 +69,7 @@ class Route
 	
 	public static function saveRequestResponse($response)
 	{
-		if (AppConfig::saveRequests() and !self::$requestID)
+		if (!AppConfig::saveRequests() and !self::$requestID)
 		{
 			return;
 		}
@@ -174,6 +174,10 @@ class Route
 			{
 				$m                         = $match->target->controller;
 				$controller                = $m($match);
+				if ($controller === false)
+				{
+					return false;
+				}
 				$match->target->controller = $controller->controller;
 				$match->target->method     = $controller->method;
 			}

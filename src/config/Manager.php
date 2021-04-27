@@ -35,7 +35,6 @@ abstract class Manager
 			ConfigEntries::addDefaultValue("dbCacheDriver", "sess");
 			ConfigEntries::addDefaultValue("__configIsIntialized", true);
 			ConfigEntries::addDefaultValue("voidDbTableClassInstall", []);
-			ConfigEntries::addDefaultValue("saveRequests", true);
 			self::routeCurrent('web');
 			self::routeDefaultRole('web');
 			self::routeRoles(['web']);
