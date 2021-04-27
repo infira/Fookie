@@ -69,22 +69,23 @@ class Route
 	
 	public static function saveRequestResponse($response)
 	{
-		if (AppConfig::saveRequests())
+		if (AppConfig::saveRequests() and !self::$requestID)
 		{
-			$config = AppConfig::saveRequests();
-			$model  = $config['model'];
-			$db     = new $model();
-			$db->Where->ID(self::$requestID);
-			if (is_array($response) or is_object($response))
-			{
-				$db->response->compress(json_encode($response));
-			}
-			else
-			{
-				$db->response->compress($response);
-			}
-			$db->update();
+			return;
 		}
+		$config = AppConfig::saveRequests();
+		$model  = $config['model'];
+		$db     = new $model();
+		$db->Where->ID(self::$requestID);
+		if (is_array($response) or is_object($response))
+		{
+			$db->response->compress(json_encode($response));
+		}
+		else
+		{
+			$db->response->compress($response);
+		}
+		$db->update();
 	}
 	
 	public static function match(): bool
