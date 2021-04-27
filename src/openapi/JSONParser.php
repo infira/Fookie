@@ -79,9 +79,10 @@ class JSONParser
 		return $properties;
 	}
 	
-	public function getRefValue(string $ref)
+	public function getRefValue(string $ref): \stdClass
 	{
-		$ref    = str_replace('#/', '', $ref);
+		$ref = str_replace('#/', '', $ref);
+		
 		$output = $this->config;
 		foreach (explode('/', $ref) as $cmp)
 		{
@@ -90,12 +91,7 @@ class JSONParser
 			$output = $output->$cmp;
 		}
 		
-		return $output;
-	}
-	
-	public function getSimplePath(string $apiPath)
-	{
-		return preg_replace('/\{\w+\}/m', '', $apiPath);
+		return (object)(array)$output;
 	}
 	
 	public function generateRequestClassName(string $apiPath)
@@ -107,6 +103,8 @@ class JSONParser
 		});
 		$name = join('', $ex) . 'Request';
 		
-		return $this->getSimplePath($name);
+		return preg_replace('/\{.+?}/m', '', $name);
 	}
 }
+
+?>

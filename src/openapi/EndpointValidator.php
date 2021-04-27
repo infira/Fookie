@@ -18,9 +18,10 @@ class EndpointValidator
 	public function __construct(string $altoRouterPath, string $apiConfigPath)
 	{
 		$this->parser = new JSONParser($apiConfigPath);
-		$this->path   = preg_replace('/\[.+:/m', '[', $altoRouterPath);
+		$this->path   = str_replace('[i:', '[integer:', $altoRouterPath);
+		$this->path   = str_replace('[*:', '[string:', $this->path);
 		$this->path   = str_replace(['[', ']'], ['{', '}'], $this->path);
-		$this->path = '/' . $this->path;
+		$this->path   = '/' . $this->path;
 	}
 	
 	
@@ -44,17 +45,13 @@ class EndpointValidator
 		$this->inputType[$input] = $type;
 	}
 	
-	
-	public function getClassName()
-	{
-		return $this->parser->generateRequestClassName($this->path);
-	}
-	
 	public function getRequest(string $namespace = ''): Request
 	{
 		$namespace = $namespace ? $namespace . '\\' : $namespace;
-		$cn        = $namespace . $this->getClassName();
+		$cn        = $namespace . $this->parser->generateRequestClassName($this->path);
 		
 		return new $cn();
 	}
 }
+
+?>

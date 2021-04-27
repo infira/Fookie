@@ -60,23 +60,108 @@ class InputGenerator extends SmurfCommand
 		$this->parser = new JSONParser($this->swaggerJsonPath);
 		
 		Dir::flush($this->installPath);
+		$ref = '$ref';
 		foreach ($this->parser->getPaths() as $path => $epConfig)
 		{
 			$vars              = new stdClass();
 			$vars->namespace   = $this->namespace ? 'namespace ' . $this->namespace . ';' : self::REMOVE_EMPTY_LINE;
 			$vars->description = 'Reqest body inputs for enpoint' . $path;
 			
-			$vars->name = $this->parser->generateRequestClassName($path);
-			$vars->path = $this->parser->getSimplePath($path);
-			$epConfig   = $epConfig->post ?? $epConfig->get ?? $epConfig->put ?? $epConfig->patch;
+			$vars->name       = $this->parser->generateRequestClassName($path);
+			$epConfig         = $epConfig->post ?? $epConfig->get ?? $epConfig->put ?? $epConfig->patch;
 			$vars->properties = [];
 			$vars->inputs     = [];
 			if (isset($epConfig->requestBody))
 			{
-				$requestBody      = $epConfig->requestBody->content;
-				$fk               = array_keys((array)$requestBody)[0];
-				$schema           = $requestBody->$fk->schema;
-				$this->parseSchema($schema, $vars);
+				$requestBody = $epConfig->requestBody->content;
+				$fk          = array_keys((array)$requestBody)[0];
+				$schema      = $requestBody->$fk->schema;
+				$properties  = $this->getProperties(clone $schema, [], $path);
+				foreach ($properties as $property => $propertyCnf)
+				{
+					$value = 'null';
+					$enum  = isset($propertyCnf->enum) ? 'One of values ' . join(', ', $propertyCnf->enum) : self::REMOVE_EMPTY_LINE;
+					if (isset($propertyCnf->$ref))
+					{
+						$propertyCnf = $this->parser->getRefValue($propertyCnf->$ref);
+					}
+					$description = $propertyCnf->description ?? $enum;
+					if ($propertyCnf->type == 'string' and property_exists($propertyCnf, 'default'))
+					{
+						$value = "'" . $propertyCnf->default . "'";
+					}
+					elseif ($propertyCnf->type == 'integer' and property_exists($propertyCnf, 'default'))
+					{
+						$value = $propertyCnf->default;
+					}
+					//elseif ($propertyCnf->type == 'array' and property_exists($propertyCnf, 'default'))
+					//{
+					//	$value = property_exists($propertyCnf, 'default') ? "'" . $propertyCnf->default . "'" : "[]";
+					//}
+					elseif ($propertyCnf->type == 'boolean' and property_exists($propertyCnf, 'default'))
+					{
+						$value = $propertyCnf->default ? 'true' : 'false';
+					}
+					$type = [];
+					if (isset($propertyCnf->nullable))
+					{
+						$type[] = 'can be NULL';
+					}
+					elseif (isset($propertyCnf->enum))
+					{
+						$enum = $propertyCnf->enum;
+						array_walk($enum, function (&$item)
+						{
+							if (is_string($item))
+							{
+								$item = "'" . $item . "'";
+							}
+						});
+						$type[] = 'can be of [' . join(',', $enum) . ']';
+					}
+					$vars->inputs[] = '
+	/**
+	 * ' . addslashes($description) . '
+	 * @var ' . $propertyCnf->type . ' ' . join(', ', $type) . '
+	 */
+	public $' . $property . ' = ' . $value . ';';
+					
+					$propertyConfigArr   = [];
+					$propertyConfigArr[] = '\'type\'=>\'' . $propertyCnf->type . '\'';
+					$propertyConfigArr[] = '\'required\'=> ' . (isset($propertyCnf->required) ? 'true' : 'false') . '';
+					if (isset($propertyCnf->default))
+					{
+						$default = $propertyCnf->default;
+						if (is_bool($propertyCnf->default))
+						{
+							$default = $propertyCnf->default ? 'true' : 'false';
+						}
+						elseif (is_string($propertyCnf->default))
+						{
+							$default = "'" . $propertyCnf->default . "'";
+						}
+						$propertyConfigArr[] = '\'default\'=>' . $default;
+					}
+					if (isset($propertyCnf->format))
+					{
+						$propertyConfigArr[] = '\'format\'=>\'' . $propertyCnf->format . '\'';
+					}
+					if (isset($propertyCnf->enum))
+					{
+						$enum = $propertyCnf->enum;
+						array_walk($enum, function (&$item)
+						{
+							if (is_string($item))
+							{
+								$item = "'" . $item . "'";
+							}
+						});
+						$propertyConfigArr[] = '\'enum\'=>[' . join(',', $enum) . ']';
+					}
+					$vars->properties[] = '
+		$this->properties[\'' . $property . '\'] = (object)[' . join(', ', $propertyConfigArr) . '];';
+				}
+				
 				$vars->inputs     = join("\n", $vars->inputs);
 				$vars->properties = join('', $vars->properties);
 			}
@@ -87,7 +172,7 @@ class InputGenerator extends SmurfCommand
 		return $this->success();
 	}
 	
-	private function parseSchema(stdClass $schema, stdClass &$vars)
+	private function getProperties(stdClass $schema, array $properties, $path): array
 	{
 		$ref = '$ref';
 		if (isset($schema->allOf))
@@ -96,93 +181,24 @@ class InputGenerator extends SmurfCommand
 			{
 				if (isset($subSchema->$ref))
 				{
-					$this->parseSchema($this->parser->getRefValue($subSchema->$ref), $vars);
+					$properties = array_merge($this->getProperties($this->parser->getRefValue($subSchema->$ref), $properties, $path), $properties);
 				}
 				elseif (isset($subSchema->properties))
 				{
-					$this->parseSchema($subSchema, $vars);
+					$properties = array_merge($this->getProperties($subSchema, $properties, $path), $properties);
 				}
 			}
 		}
 		elseif (isset($schema->$ref))
 		{
-			$this->parseSchema($this->parser->getRefValue($schema->$ref), $vars);
+			$properties = array_merge($this->getProperties($this->parser->getRefValue($schema->$ref), $properties, $path), $properties);
 		}
-		elseif (isset($schema->properties))
+		else//if (isset($schema->properties))
 		{
-			foreach ($schema->properties as $property => $propertyCnf)
-			{
-				$value = 'null';
-				$enum  = isset($propertyCnf->enum) ? 'One of values ' . join(', ', $propertyCnf->enum) : self::REMOVE_EMPTY_LINE;
-				
-				if (isset($propertyCnf->$ref))
-				{
-					$propertyCnf = $this->parser->getRefValue($propertyCnf->$ref);
-				}
-				$description = $propertyCnf->description ?? $enum;
-				if ($propertyCnf->type == 'string')
-				{
-					$value = isset($propertyCnf->default) ? "'" . $propertyCnf->default . "'" : "''";
-				}
-				elseif ($propertyCnf->type == 'integer')
-				{
-					$value = $propertyCnf->default ?? "null";
-				}
-				elseif ($propertyCnf->type == 'array')
-				{
-					$value = isset($propertyCnf->default) ? "'" . $propertyCnf->default . "'" : "[]";
-				}
-				$type = [];
-				if (isset($propertyCnf->nullable))
-				{
-					$type[] = 'can be NULL';
-				}
-				elseif (isset($propertyCnf->enum))
-				{
-					$enum = $propertyCnf->enum;
-					array_walk($enum, function (&$item)
-					{
-						if (is_string($item))
-						{
-							$item = "'" . $item . "'";
-						}
-					});
-					$type[] = 'can be of [' . join(',', $enum) . ']';
-				}
-				$vars->inputs[] = '
-	/**
-	 * ' . $description . '
-	 * @var ' . $propertyCnf->type . ' ' . join(', ', $type) . '
-	 */
-	public $' . $property . ' = ' . $value . ';';
-				
-				$propertyConfigArr   = [];
-				$propertyConfigArr[] = '\'type\'=>\'' . $propertyCnf->type . '\'';
-				$propertyConfigArr[] = '\'required\'=> ' . (isset($propertyCnf->required) ? 'true' : 'false') . '';
-				if (isset($propertyCnf->default))
-				{
-					$propertyConfigArr[] = '\'default\'=>\'' . $propertyCnf->default . '\'';
-				}
-				if (isset($propertyCnf->format))
-				{
-					$propertyConfigArr[] = '\'format\'=>\'' . $propertyCnf->format . '\'';
-				}
-				if (isset($propertyCnf->enum))
-				{
-					$enum = $propertyCnf->enum;
-					array_walk($enum, function (&$item)
-					{
-						if (is_string($item))
-						{
-							$item = "'" . $item . "'";
-						}
-					});
-					$propertyConfigArr[] = '\'enum\'=>[' . join(',', $enum) . ']';
-				}
-				$vars->properties[] = '
-		$this->properties[\'' . $property . '\'] = (object)[' . join(', ', $propertyConfigArr) . '];';
-			}
+			$properties = array_merge((array)$schema->properties, $properties);
 		}
+		
+		return $properties;
 	}
 	
 	private function makeFile(string $fileName, $content): void

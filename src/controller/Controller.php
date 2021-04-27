@@ -4,7 +4,7 @@ namespace Infira\Fookie\controller;
 
 use Infira\Utils\ClassFarm;
 use AppConfig;
-use Infira\Fookie\request\Payload;
+use Infira\Fookie\Fookie;
 
 ClassFarm::add("Controller", "Controller");
 
@@ -23,9 +23,9 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	
 	public final function authorize()
 	{
-		if ($this->allowOnlyDevAccess == true and !AppConfig::isDevENV())
+		if ($this->allowOnlyDevAccess == true and !AppConfig::isLiveWorthy())
 		{
-			Payload::sendError("oly dev environment can access this controller");
+			Fookie::error("oly dev environment can access this controller", null, 500);
 		}
 		elseif ($this->authRequired === true and !$this->isAccessAllowed())
 		{
@@ -44,7 +44,7 @@ abstract class Controller extends \Infira\Utils\MagicClass
 	
 	protected function onAuthRequired()
 	{
-		Payload::sendError("auth requierd");
+		Fookie::error("auth requierd");
 	}
 	
 	public final function requireAuth(bool $require)

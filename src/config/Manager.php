@@ -142,28 +142,6 @@ abstract class Manager
 	}
 	
 	/**
-	 * Vod logging on these db tables
-	 *
-	 * @param array|null $array $array - array of tables or string of tables separated by commas
-	 * @return array
-	 */
-	public final static function voidDbTablesLog(array $array = null): array
-	{
-		return (array)self::setGetVar("voidDbTablesLog", $array);
-	}
-	
-	/**
-	 * Vod logging on these db tables
-	 *
-	 * @param bool $bool
-	 * @return bool
-	 */
-	public final static function dbLoggerEnabled(bool $bool = null): bool
-	{
-		return (bool)self::setGetVar("dbLoggerEnabled", $bool);
-	}
-	
-	/**
 	 * Default route role
 	 *
 	 * @param string|null $role

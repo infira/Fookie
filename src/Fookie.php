@@ -38,7 +38,7 @@ class Fookie
 		}
 		else
 		{
-			Payload::sendError("route not found",'routeNotFound',404);
+			Fookie::error("route not found", 'routeNotFound', 404);
 		}
 		$payload = Payload::getOutput();
 		if (self::opt('showProfile'))
@@ -80,6 +80,8 @@ class Fookie
 				$name = Http::getGET('_overrideSessionName');
 			}
 		}
+		Session::setTimeout(AppConfig::sessionTimeout());
+		ini_set('session.gc_maxlifetime', AppConfig::sessionTimeout());
 		Session::init($name, $SID);
 	}
 	
@@ -120,10 +122,21 @@ class Fookie
 		return self::$options[$name];
 	}
 	
-	
 	private static function closeConnections()
 	{
 		return true;
+	}
+	
+	public static function error($error, string $code = null, $httpStatusCode = 400)
+	{
+		if (AppConfig::isLiveWorthy())
+		{
+			Payload::sendError($error, $code, $httpStatusCode);
+		}
+		else
+		{
+			alert($error);
+		}
 	}
 }
 

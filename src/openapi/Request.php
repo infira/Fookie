@@ -34,7 +34,6 @@ abstract class Request
 				
 				return $output;
 			}
-			
 			if (array_key_exists($property, $payload))
 			{
 				$Valid = $this->validateType($property, $payload[$property]);
@@ -45,8 +44,8 @@ abstract class Request
 					return $output;
 				}
 				$payload[$property] = $Valid->value;
+				$this->$property = $payload[$property];
 			}
-			$this->$property = $payload[$property];
 		}
 		$output->payload = $payload;
 		

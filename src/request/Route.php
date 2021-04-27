@@ -9,6 +9,7 @@ use Infira\Fookie\facade\Variable;
 use stdClass;
 use Infira\Fookie\facade\Db;
 use Infira\Fookie\controller\Controller;
+use Infira\Fookie\Fookie;
 
 class Route
 {
@@ -69,7 +70,7 @@ class Route
 	
 	public static function saveRequestResponse($response)
 	{
-		if (!AppConfig::saveRequests() and !self::$requestID)
+		if (!AppConfig::saveRequests() or !self::$requestID)
 		{
 			return;
 		}
@@ -172,8 +173,8 @@ class Route
 			
 			if (is_callable($match->target->controller))
 			{
-				$m                         = $match->target->controller;
-				$controller                = $m($match);
+				$m          = $match->target->controller;
+				$controller = $m($match);
 				if ($controller === false)
 				{
 					return false;
@@ -284,7 +285,7 @@ class Route
 		
 		if (!method_exists($Controller, "validate"))
 		{
-			Payload::sendError('Controller must contain validate method');
+			Fookie::error('Controller must contain validate method', null, 500);
 		}
 		
 		if (!$Controller->validate())
@@ -313,7 +314,7 @@ class Route
 		}
 		else
 		{
-			Payload::sendError("$controllerName->$methodName does not exists");
+			Fookie::error("$controllerName->$methodName does not exists", null, 500);
 		}
 	}
 	
@@ -321,14 +322,14 @@ class Route
 	{
 		if (isset(self::$routes[$role][$name]))
 		{
-			alert("Route $role.$name is already defined");
+			Fookie::error("Route $role.$name is already defined", null, 500);
 		}
 		$controller = is_callable($controller) ? $controller : trim($controller);
 		if (is_string($controller))
 		{
 			if (strpos($controller, '#') === false)
 			{
-				alert("Controller($controller) method is undefined");
+				Fookie::error("Controller($controller) method is undefined", null, 500);
 			}
 		}
 		self::$routes[$role][$name] = (object)['method' => trim($requestMethod), 'path' => trim($requestPath), 'controller' => $controller];
@@ -338,7 +339,7 @@ class Route
 	{
 		if (array_key_exists($name, self::$matchTypes))
 		{
-			alert("Match type already defined");
+			Fookie::error("Match type already defined", null, 500);
 		}
 		self::$matchTypes[$name] = $expression;
 		self::$Alto->addMatchTypes([$name => $expression]);
