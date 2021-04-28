@@ -44,14 +44,13 @@ abstract class Request
 					return $output;
 				}
 				$payload[$property] = $Valid->value;
-				$this->$property = $payload[$property];
+				$this->$property    = $payload[$property];
 			}
 		}
 		$output->payload = $payload;
 		
 		return $output;
 	}
-	
 	
 	/**
 	 * @param string $property
@@ -83,9 +82,30 @@ abstract class Request
 			$value = $value === 1;
 			$type  = 'bool';
 		}
+		
+		if ($requiredType == 'number' and !in_array($type, ['integer', 'float']))
+		{
+			$Output->error = "Property $property must be $requiredType, $type was given";
+			
+			return $Output;
+		}
 		if ($requiredType != $type)
 		{
 			$Output->error = "Property $property must be $requiredType, $type was given";
+			
+			return $Output;
+		}
+		$min = $this->properties[$property]->min ?? null;
+		if ($min and $value < $min)
+		{
+			$Output->error = "Input $property value minimum is $min, $value was givven";
+			
+			return $Output;
+		}
+		$max = $this->properties[$property]->max ?? null;
+		if ($max and $value > $max)
+		{
+			$Output->error = "Input $property value maximum is $max, $value was givven";
 			
 			return $Output;
 		}

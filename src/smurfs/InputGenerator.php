@@ -107,7 +107,7 @@ class InputGenerator extends SmurfCommand
 					{
 						$type[] = 'can be NULL';
 					}
-					elseif (isset($propertyCnf->enum))
+					if (property_exists($propertyCnf, 'enum'))
 					{
 						$enum = $propertyCnf->enum;
 						array_walk($enum, function (&$item)
@@ -119,6 +119,14 @@ class InputGenerator extends SmurfCommand
 						});
 						$type[] = 'can be of [' . join(',', $enum) . ']';
 					}
+					if (property_exists($propertyCnf, 'minimum'))
+					{
+						$type[] = 'min=' . $propertyCnf->minimum;
+					}
+					if (property_exists($propertyCnf, 'maximum'))
+					{
+						$type[] = 'max=' . $propertyCnf->maximum;
+					}
 					$vars->inputs[] = '
 	/**
 	 * ' . addslashes($description) . '
@@ -129,7 +137,7 @@ class InputGenerator extends SmurfCommand
 					$propertyConfigArr   = [];
 					$propertyConfigArr[] = '\'type\'=>\'' . $propertyCnf->type . '\'';
 					$propertyConfigArr[] = '\'required\'=> ' . (isset($propertyCnf->required) ? 'true' : 'false') . '';
-					if (isset($propertyCnf->default))
+					if (property_exists($propertyCnf, 'default'))
 					{
 						$default = $propertyCnf->default;
 						if (is_bool($propertyCnf->default))
@@ -142,11 +150,19 @@ class InputGenerator extends SmurfCommand
 						}
 						$propertyConfigArr[] = '\'default\'=>' . $default;
 					}
-					if (isset($propertyCnf->format))
+					if (property_exists($propertyCnf, 'format'))
 					{
 						$propertyConfigArr[] = '\'format\'=>\'' . $propertyCnf->format . '\'';
 					}
-					if (isset($propertyCnf->enum))
+					if (property_exists($propertyCnf, 'minimum'))
+					{
+						$propertyConfigArr[] = '\'min\'=>' . $propertyCnf->minimum;
+					}
+					if (property_exists($propertyCnf, 'maximum'))
+					{
+						$propertyConfigArr[] = '\'max\'=>' . $propertyCnf->maximum;
+					}
+					if (property_exists($propertyCnf, 'enum'))
 					{
 						$enum = $propertyCnf->enum;
 						array_walk($enum, function (&$item)
