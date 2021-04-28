@@ -64,6 +64,7 @@ class InputGenerator extends SmurfCommand
 		foreach ($this->parser->getPaths() as $path => $epConfig)
 		{
 			$vars              = new stdClass();
+			$vars->path        = $path;
 			$vars->namespace   = $this->namespace ? 'namespace ' . $this->namespace . ';' : self::REMOVE_EMPTY_LINE;
 			$vars->description = 'Reqest body inputs for enpoint' . $path;
 			
