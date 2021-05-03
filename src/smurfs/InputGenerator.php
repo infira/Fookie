@@ -80,20 +80,35 @@ class InputGenerator extends SmurfCommand
 				$properties  = $this->getProperties(clone $schema, [], $path);
 				foreach ($properties as $property => $propertyCnf)
 				{
-					$value = 'null';
-					$enum  = isset($propertyCnf->enum) ? 'One of values ' . join(', ', $propertyCnf->enum) : self::REMOVE_EMPTY_LINE;
 					if (isset($propertyCnf->$ref))
 					{
 						$propertyCnf = $this->parser->getRefValue($propertyCnf->$ref);
 					}
+					
+					$value = 'null';
+					if (!property_exists($propertyCnf, 'required'))
+					{
+						$propertyCnf->required = false;
+					}
+					$enum        = isset($propertyCnf->enum) ? 'One of values ' . join(', ', $propertyCnf->enum) : self::REMOVE_EMPTY_LINE;
 					$description = $propertyCnf->description ?? $enum;
 					if ($propertyCnf->type == 'string' and property_exists($propertyCnf, 'default'))
 					{
 						$value = "'" . $propertyCnf->default . "'";
 					}
-					elseif ($propertyCnf->type == 'integer' and property_exists($propertyCnf, 'default'))
+					elseif ($propertyCnf->type == 'integer')
 					{
-						$value = $propertyCnf->default;
+						if (property_exists($propertyCnf, 'default'))
+						{
+							$value = $propertyCnf->default;
+						}
+						else
+						{
+							if (property_exists($propertyCnf, 'minimum'))
+							{
+								$value = $propertyCnf->minimum;
+							}
+						}
 					}
 					//elseif ($propertyCnf->type == 'array' and property_exists($propertyCnf, 'default'))
 					//{
@@ -137,7 +152,7 @@ class InputGenerator extends SmurfCommand
 					
 					$propertyConfigArr   = [];
 					$propertyConfigArr[] = '\'type\'=>\'' . $propertyCnf->type . '\'';
-					$propertyConfigArr[] = '\'required\'=> ' . (isset($propertyCnf->required) ? 'true' : 'false') . '';
+					$propertyConfigArr[] = '\'required\'=> ' . ($propertyCnf->required ? 'true' : 'false') . '';
 					if (property_exists($propertyCnf, 'default'))
 					{
 						$default = $propertyCnf->default;

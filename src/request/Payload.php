@@ -5,16 +5,16 @@ namespace Infira\Fookie\request;
 use Infira\Utils\Http;
 use Infira\Utils\Is;
 use AppConfig;
-use Infira\Fookie\facade\Variable;
 
 class Payload
 {
-	private static $data         = [];
-	private static $root         = 'payload';
-	private static $payload      = null;
-	private static $error        = [];
-	private static $plainPoutput = false;
-	private static $outputsJSON  = false;
+	private static $data           = [];
+	private static $root           = 'payload';
+	private static $payload        = null;
+	private static $error          = [];
+	private static $plainPoutput   = false;
+	private static $outputsJSON    = false;
+	private static $jsonEncodeFlag = null;
 	
 	/**
 	 * @var callable
@@ -50,6 +50,15 @@ class Payload
 	{
 		self::setHeader('Content-Type: application/json');
 		self::$outputsJSON = true;
+	}
+	
+	/**
+	 * @see https://www.php.net/manual/en/function.json-encode.php
+	 * @param int $flag
+	 */
+	public static function setJsonEncodeFlag(int $flag)
+	{
+		self::$jsonEncodeFlag = $flag;
 	}
 	
 	public static function setField(string $name, $value)
@@ -160,10 +169,6 @@ class Payload
 		if (Http::acceptJSON() or self::$outputsJSON)
 		{
 			self::setJSONHeader();
-			if (self::haveError())
-			{
-				self::$error['message'] = str_replace(['<br />', '<br>', '< br>'], "\n", self::$error['message']);
-			}
 		}
 		if (self::haveError())
 		{
@@ -190,6 +195,11 @@ class Payload
 		Route::saveRequestResponse($output);
 		if (self::$outputsJSON)
 		{
+			if (self::$jsonEncodeFlag)
+			{
+				return json_encode($output, self::$jsonEncodeFlag);
+			}
+			
 			return json_encode($output);
 		}
 		if (is_string($output))

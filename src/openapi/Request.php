@@ -144,6 +144,20 @@ abstract class Request
 		
 		return property_exists($this, $property);
 	}
+	
+	public function getDefault(string $prperty)
+	{
+		if (!array_key_exists($prperty, $this->properties))
+		{
+			return null;
+		}
+		if (!property_exists($this->properties[$prperty], 'default'))
+		{
+			return null;
+		}
+		
+		return $this->properties[$prperty]->default;
+	}
 }
 
 ?>
