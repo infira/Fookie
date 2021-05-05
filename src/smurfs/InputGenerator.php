@@ -7,8 +7,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Infira\Fookie\facade\Variable;
 use stdClass;
 use File;
-use Dir;
 use Infira\Fookie\OpenAPI\JSONParser;
+use Dir;
 
 class InputGenerator extends SmurfCommand
 {
@@ -60,7 +60,37 @@ class InputGenerator extends SmurfCommand
 		$this->parser = new JSONParser($this->swaggerJsonPath);
 		
 		Dir::flush($this->installPath);
-		$ref = '$ref';
+		$this->makeSchemas();
+		$this->makeInputs();
+		$this->afterExecute();
+		
+		return $this->success();
+	}
+	
+	private function makeSchemas()
+	{
+		foreach ($this->parser->getSchemas() as $name => $epConfig)
+		{
+			$vars              = new stdClass();
+			$vars->namespace   = $this->namespace ? 'namespace ' . $this->namespace . ';' : self::REMOVE_EMPTY_LINE;
+			$vars->description = 'Reqest body inputs for enpoint' . $name;
+			$vars->name        = Variable::ucFirst($name) . 'Schema';
+			if (isset($epConfig->properties))
+			{
+				$properties       = $this->getProperties(clone $epConfig, [], $name);
+				$vars->properties = [];
+				foreach ($properties as $property => $propertyCnf)
+				{
+					$vars->properties[] = $this->makeClassProperty($property, $propertyCnf);
+				}
+				$vars->properties = join("\n", $vars->properties);
+				$this->makeFile($this->installPath . '/' . $vars->name . '.php', Variable::assign((array)$vars, file_get_contents(__DIR__ . '/' . 'openApiSchemaTemplate.txt')));
+			}
+		}
+	}
+	
+	private function makeInputs()
+	{
 		foreach ($this->parser->getPaths() as $path => $epConfig)
 		{
 			$vars              = new stdClass();
@@ -68,10 +98,10 @@ class InputGenerator extends SmurfCommand
 			$vars->namespace   = $this->namespace ? 'namespace ' . $this->namespace . ';' : self::REMOVE_EMPTY_LINE;
 			$vars->description = 'Reqest body inputs for enpoint' . $path;
 			
-			$vars->name       = $this->parser->generateRequestClassName($path);
-			$epConfig         = $epConfig->post ?? $epConfig->get ?? $epConfig->put ?? $epConfig->patch;
-			$vars->properties = [];
-			$vars->inputs     = [];
+			$vars->name           = $this->parser->generateRequestClassName($path);
+			$epConfig             = $epConfig->post ?? $epConfig->get ?? $epConfig->put ?? $epConfig->patch;
+			$vars->properties     = [];
+			$vars->propertyConfig = [];
 			if (isset($epConfig->requestBody))
 			{
 				$requestBody = $epConfig->requestBody->content;
@@ -80,91 +110,14 @@ class InputGenerator extends SmurfCommand
 				$properties  = $this->getProperties(clone $schema, [], $path);
 				foreach ($properties as $property => $propertyCnf)
 				{
-					if (isset($propertyCnf->$ref))
-					{
-						$propertyCnf = $this->parser->getRefValue($propertyCnf->$ref);
-					}
-					
-					$value = 'null';
-					if (!property_exists($propertyCnf, 'required'))
-					{
-						$propertyCnf->required = false;
-					}
-					$enum        = isset($propertyCnf->enum) ? 'One of values ' . join(', ', $propertyCnf->enum) : self::REMOVE_EMPTY_LINE;
-					$description = $propertyCnf->description ?? $enum;
-					if ($propertyCnf->type == 'string' and property_exists($propertyCnf, 'default'))
-					{
-						$value = "'" . $propertyCnf->default . "'";
-					}
-					elseif ($propertyCnf->type == 'integer')
-					{
-						if (property_exists($propertyCnf, 'default'))
-						{
-							$value = $propertyCnf->default;
-						}
-						else
-						{
-							if (property_exists($propertyCnf, 'minimum'))
-							{
-								$value = $propertyCnf->minimum;
-							}
-						}
-					}
-					//elseif ($propertyCnf->type == 'array' and property_exists($propertyCnf, 'default'))
-					//{
-					//	$value = property_exists($propertyCnf, 'default') ? "'" . $propertyCnf->default . "'" : "[]";
-					//}
-					elseif ($propertyCnf->type == 'boolean' and property_exists($propertyCnf, 'default'))
-					{
-						$value = $propertyCnf->default ? 'true' : 'false';
-					}
-					$type = [];
-					if (isset($propertyCnf->nullable))
-					{
-						$type[] = 'can be NULL';
-					}
-					if (property_exists($propertyCnf, 'enum'))
-					{
-						$enum = $propertyCnf->enum;
-						array_walk($enum, function (&$item)
-						{
-							if (is_string($item))
-							{
-								$item = "'" . $item . "'";
-							}
-						});
-						$type[] = 'can be of [' . join(',', $enum) . ']';
-					}
-					if (property_exists($propertyCnf, 'minimum'))
-					{
-						$type[] = 'min=' . $propertyCnf->minimum;
-					}
-					if (property_exists($propertyCnf, 'maximum'))
-					{
-						$type[] = 'max=' . $propertyCnf->maximum;
-					}
-					$vars->inputs[] = '
-	/**
-	 * ' . addslashes($description) . '
-	 * @var ' . $propertyCnf->type . ' ' . join(', ', $type) . '
-	 */
-	public $' . $property . ' = ' . $value . ';';
+					$vars->properties[] = $this->makeClassProperty($property, $propertyCnf);
 					
 					$propertyConfigArr   = [];
 					$propertyConfigArr[] = '\'type\'=>\'' . $propertyCnf->type . '\'';
 					$propertyConfigArr[] = '\'required\'=> ' . ($propertyCnf->required ? 'true' : 'false') . '';
 					if (property_exists($propertyCnf, 'default'))
 					{
-						$default = $propertyCnf->default;
-						if (is_bool($propertyCnf->default))
-						{
-							$default = $propertyCnf->default ? 'true' : 'false';
-						}
-						elseif (is_string($propertyCnf->default))
-						{
-							$default = "'" . $propertyCnf->default . "'";
-						}
-						$propertyConfigArr[] = '\'default\'=>' . $default;
+						$propertyConfigArr[] = '\'default\'=>' . $this->makeDefaultValue($propertyCnf->default);
 					}
 					if (property_exists($propertyCnf, 'format'))
 					{
@@ -190,18 +143,102 @@ class InputGenerator extends SmurfCommand
 						});
 						$propertyConfigArr[] = '\'enum\'=>[' . join(',', $enum) . ']';
 					}
-					$vars->properties[] = '
+					$vars->propertyConfig[] = '
 		$this->properties[\'' . $property . '\'] = (object)[' . join(', ', $propertyConfigArr) . '];';
 				}
-				
-				$vars->inputs     = join("\n", $vars->inputs);
-				$vars->properties = join('', $vars->properties);
+				$vars->propertyConfig = join('', $vars->propertyConfig);
+				$vars->properties     = join('', $vars->properties);
 			}
 			$this->makeFile($this->installPath . '/' . $vars->name . '.php', Variable::assign((array)$vars, file_get_contents(__DIR__ . '/' . 'openApiRequestTemplate.txt')));
 		}
-		$this->afterExecute();
+	}
+	
+	private function makeClassProperty(string $property, stdClass $propertyCnf): string
+	{
+		$value = 'null';
+		if (!property_exists($propertyCnf, 'required'))
+		{
+			$propertyCnf->required = false;
+		}
+		$enum        = isset($propertyCnf->enum) ? 'One of values ' . join(', ', $propertyCnf->enum) : self::REMOVE_EMPTY_LINE;
+		$description = $propertyCnf->description ?? $enum;
+		if ($propertyCnf->type == 'integer')
+		{
+			if (property_exists($propertyCnf, 'default'))
+			{
+				$value = $this->makeDefaultValue($propertyCnf->default);
+			}
+			else
+			{
+				if (property_exists($propertyCnf, 'minimum'))
+				{
+					$value = $propertyCnf->minimum;
+				}
+			}
+		}
+		elseif (property_exists($propertyCnf, 'default'))
+		{
+			$value = $this->makeDefaultValue($propertyCnf->default);
+		}
+		//elseif ($propertyCnf->type == 'array' and property_exists($propertyCnf, 'default'))
+		//{
+		//	$value = property_exists($propertyCnf, 'default') ? "'" . $propertyCnf->default . "'" : "[]";
+		//}
+		elseif ($propertyCnf->type == 'boolean' and property_exists($propertyCnf, 'default'))
+		{
+			$value = $propertyCnf->default ? 'true' : 'false';
+		}
+		$type = [];
+		if (isset($propertyCnf->nullable))
+		{
+			$type[] = 'can be NULL';
+		}
+		if (property_exists($propertyCnf, 'enum'))
+		{
+			$enum = $propertyCnf->enum;
+			array_walk($enum, function (&$item)
+			{
+				if (is_string($item))
+				{
+					$item = "'" . $item . "'";
+				}
+			});
+			$type[] = 'can be of [' . join(',', $enum) . ']';
+		}
+		if (property_exists($propertyCnf, 'minimum'))
+		{
+			$type[] = 'min=' . $propertyCnf->minimum;
+		}
+		if (property_exists($propertyCnf, 'maximum'))
+		{
+			$type[] = 'max=' . $propertyCnf->maximum;
+		}
 		
-		return $this->success();
+		return '
+	/**
+	 * ' . addslashes($description) . '
+	 * @var ' . $propertyCnf->type . ' ' . join(', ', $type) . '
+	 */
+	public $' . $property . ' = ' . $value . ';
+	';
+	}
+	
+	private function makeDefaultValue($default)
+	{
+		if (is_bool($default))
+		{
+			return $default ? 'true' : 'false';
+		}
+		elseif (is_null($default))
+		{
+			return 'null';
+		}
+		elseif (is_string($default))
+		{
+			return "'" . $default . "'";
+		}
+		
+		return $default;
 	}
 	
 	private function getProperties(stdClass $schema, array $properties, $path): array
@@ -227,7 +264,16 @@ class InputGenerator extends SmurfCommand
 		}
 		else//if (isset($schema->properties))
 		{
-			$properties = array_merge((array)$schema->properties, $properties);
+			$schema->properties = (array)$schema->properties;
+			foreach ($schema->properties as $k => $propertyCnf)
+			{
+				$ref = '$ref';
+				if (isset($propertyCnf->$ref))
+				{
+					$schema->properties[$k] = $this->parser->getRefValue($propertyCnf->$ref);
+				}
+			}
+			$properties = array_merge($schema->properties, $properties);
 		}
 		
 		return $properties;

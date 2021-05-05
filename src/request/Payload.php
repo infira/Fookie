@@ -166,7 +166,7 @@ class Payload
 	
 	public static function getOutput(): ?string
 	{
-		if (Http::acceptJSON() or self::$outputsJSON)
+		if ((Http::acceptJSON() or self::$outputsJSON) and !self::$plainPoutput)
 		{
 			self::setJSONHeader();
 		}

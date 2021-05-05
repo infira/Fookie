@@ -2,8 +2,6 @@
 
 namespace Infira\Fookie\OpenAPI;
 
-use AppConfig;
-
 class JSONParser
 {
 	/**
@@ -17,8 +15,7 @@ class JSONParser
 		{
 			alert("Swagger file not found");
 		}
-		$this->config        = json_decode(file_get_contents($swaggerFile));
-		$this->config->paths = (array)$this->config->paths;
+		$this->config = json_decode(file_get_contents($swaggerFile));
 	}
 	
 	public function pathExists(string $path): bool
@@ -28,7 +25,12 @@ class JSONParser
 	
 	public function getPaths(): array
 	{
-		return $this->config->paths;
+		return (array)$this->config->paths;
+	}
+	
+	public function getSchemas(): array
+	{
+		return (array)$this->config->components->schemas;
 	}
 	
 	public function getConfig(): \stdClass

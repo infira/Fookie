@@ -8,12 +8,8 @@
 /**
  * %description%
  */
-class %name% extends \Infira\Fookie\OpenAPI\Request
+class %name%
 {
-    public function __construct()
-    {
-        $this->path = '%path%';%propertyConfig%
-    }
     %properties%
 }
 ?>

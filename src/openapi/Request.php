@@ -48,6 +48,7 @@ abstract class Request
 			}
 		}
 		$output->payload = $payload;
+		$this->payload   = $payload;
 		
 		return $output;
 	}
@@ -134,9 +135,15 @@ abstract class Request
 		return $Output;
 	}
 	
+	/**
+	 * Check if property exists in payload
+	 *
+	 * @param string $property
+	 * @return bool
+	 */
 	public function exists(string $property): bool
 	{
-		return property_exists($this, $property);
+		return array_key_exists($property, $this->payload);
 	}
 	
 	public function get(string $property, $onNotFound): bool

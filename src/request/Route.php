@@ -7,7 +7,6 @@ use AppConfig;
 use Path;
 use Infira\Fookie\facade\Variable;
 use stdClass;
-use Infira\Fookie\facade\Db;
 use Infira\Fookie\controller\Controller;
 use Infira\Fookie\Fookie;
 
@@ -245,31 +244,33 @@ class Route
 		
 		if (AppConfig::saveRequests())
 		{
-			$config = AppConfig::saveRequests();
-			$model  = $config['model'];
-			$db     = new $model();
-			$db->methodArguments->json($controllerMethodArguments);
-			$db->request->compress(json_encode(Http::getPOST()));
-			$db->method($_SERVER['REQUEST_METHOD']);
-			$db->uri($_SERVER['REQUEST_URI']);
-			$db->insert();
-			self::$requestID = $db->getLastSaveID();
-			Payload::setRequestID(self::$requestID);
-		}
-		
-		
-		if (Http::existsGET('_rrid') and AppConfig::saveRequests())
-		{
-			$db = Db::TSavedRequest();
-			$db->ID(Http::getGET('_rrid'));
-			$req                       = $db->select()->getObject();
-			$controllerMethodArguments = unserialize($req->methodArguments);
-			$post                      = unserialize($req->post);
-			addExtraErrorInfo('saved$req', $req);
-			addExtraErrorInfo('errorReplicateLink', Http::getCurrentUrl());
-			addExtraErrorInfo('$controllerMethodArguments', $controllerMethodArguments);
-			Http::flushPOST((is_array($post) ? $post : []));
-			$_SERVER['REQUEST_METHOD'] = $req->method;
+			$config    = AppConfig::saveRequests();
+			$saveModel = $config['model'];
+			$db        = new $saveModel();
+			if (Http::existsGET('_rrid'))
+			{
+				
+				$db->ID(Http::getGET('_rrid'));
+				$req                       = $db->select()->getObject();
+				$controllerMethodArguments = unserialize($req->methodArguments);
+				$post                      = unserialize($req->post);
+				addExtraErrorInfo('saved$req', $req);
+				addExtraErrorInfo('errorReplicateLink', Http::getCurrentUrl());
+				addExtraErrorInfo('$controllerMethodArguments', $controllerMethodArguments);
+				Http::flushPOST((is_array($post) ? $post : []));
+				$_SERVER['REQUEST_METHOD'] = $req->method;
+			}
+			else
+			{
+				$db->methodArguments->json($controllerMethodArguments);
+				$db->post->compress(json_encode(Http::getPOST()));
+				$db->headers->compress(json_encode(getallheaders()));
+				$db->method($_SERVER['REQUEST_METHOD']);
+				$db->uri($_SERVER['REQUEST_URI']);
+				$db->insert();
+				self::$requestID = $db->getLastSaveID();
+				Payload::setRequestID(self::$requestID);
+			}
 		}
 		
 		if (!is_array($controllerMethodArguments))
