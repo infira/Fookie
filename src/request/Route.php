@@ -12,10 +12,11 @@ use Infira\Fookie\Fookie;
 
 class Route
 {
-	private static $requestID  = null;
-	private static $routes     = [];
-	private static $options    = [];
-	private static $matchTypes = [];
+	private static $requestID      = null;
+	private static $routes         = [];
+	private static $options        = [];
+	private static $matchTypes     = [];
+	private static $requestPaylaod = null;
 	
 	/**
 	 * @var AltoRouterExtendor
@@ -206,42 +207,51 @@ class Route
 			return false;
 		}
 		$controllerMethodArguments = [];
-		$contentType               = '';
+		$contentType               = $_SERVER["CONTENT_TYPE"] ?? '';
 		
 		if (Http::existsGET("ajaxMethodArguments"))
 		{
 			$controllerMethodArguments = array_merge($controllerMethodArguments, Variable::toArray(json_decode(Http::getGET("ajaxMethodArguments"))));
 		}
-		if (isset($_SERVER["CONTENT_TYPE"]) and preg_match('%application/json%', $_SERVER["CONTENT_TYPE"]))
+		
+		if ($_SERVER["REQUEST_METHOD"] == "POST")
 		{
-			$contentType = $_SERVER["CONTENT_TYPE"];
-		}
-		if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $contentType))
-		{
-			if ($_SERVER["REQUEST_METHOD"] == "POST" && preg_match('%application/json%', $contentType))
+			if (preg_match('%application/json%', $contentType))
 			{
 				$requestPayload = json_decode(file_get_contents("php://input", false, stream_context_get_default(), 0, $_SERVER["CONTENT_LENGTH"]));
-				addExtraErrorInfo('php://input', $requestPayload);
-				
-				$requestPayload = Variable::apply((object)[], $requestPayload, ["ajaxMethodArguments" => null]);
-				
-				if (checkArray($requestPayload->ajaxMethodArguments))
+				if (is_object($requestPayload))
 				{
-					$controllerMethodArguments = array_merge($controllerMethodArguments, $requestPayload->ajaxMethodArguments);
+					if (property_exists($requestPayload, 'ajaxMethodArguments') and checkArray($requestPayload->ajaxMethodArguments))
+					{
+						$controllerMethodArguments = array_merge($controllerMethodArguments, $requestPayload->ajaxMethodArguments);
+						unset($requestPayload->ajaxMethodArguments);
+					}
+					foreach ((array)$requestPayload as $name => $val)
+					{
+						Http::setPOST($name, $val);
+					}
+					self::$requestPaylaod = Http::getPOST();
 				}
-				unset($requestPayload->ajaxMethodArguments);
-				
-				foreach ((array)$requestPayload as $name => $val)
+				else
 				{
-					Http::setPOST($name, $val);
+					self::$requestPaylaod = $requestPayload;
+				}
+			}
+			else
+			{
+				self::$requestPaylaod = Http::getPOST();
+				
+				if (Http::existsPOST('ajaxMethodArguments'))
+				{
+					$ama = Http::getPOST('ajaxMethodArguments');
+					if (is_string($ama))
+					{
+						$ama = (array)json_decode($ama);
+					}
+					$controllerMethodArguments = array_merge($controllerMethodArguments, $ama);
 				}
 			}
 		}
-		if (Http::existsPOST("ajaxMethodArguments"))
-		{
-			$controllerMethodArguments = array_merge($controllerMethodArguments, Variable::toArray(Http::getPOST("ajaxMethodArguments")));
-		}
-		
 		if (AppConfig::saveRequests())
 		{
 			$config    = AppConfig::saveRequests();
@@ -251,19 +261,21 @@ class Route
 			{
 				
 				$db->ID(Http::getGET('_rrid'));
-				$req                       = $db->select()->getObject();
-				$controllerMethodArguments = unserialize($req->methodArguments);
-				$post                      = unserialize($req->post);
+				$req                       = $db->select('UNCOMPRESS(post) as post,UNCOMPRESS(headers) as headers,methodArguments,method')->getObject();
+				$controllerMethodArguments = json_decode($req->methodArguments);
+				$headers                   = (array)json_decode($req->headers);
+				$post                      = (array)json_decode($req->post);
 				addExtraErrorInfo('saved$req', $req);
 				addExtraErrorInfo('errorReplicateLink', Http::getCurrentUrl());
 				addExtraErrorInfo('$controllerMethodArguments', $controllerMethodArguments);
-				Http::flushPOST((is_array($post) ? $post : []));
+				Http::flushPOST($post);
 				$_SERVER['REQUEST_METHOD'] = $req->method;
 			}
 			else
 			{
 				$db->methodArguments->json($controllerMethodArguments);
-				$db->post->compress(json_encode(Http::getPOST()));
+				$str = json_encode(self::$requestPaylaod);
+				$db->post->compress(json_encode(self::$requestPaylaod));
 				$db->headers->compress(json_encode(getallheaders()));
 				$db->method($_SERVER['REQUEST_METHOD']);
 				$db->uri($_SERVER['REQUEST_URI']);
@@ -412,6 +424,21 @@ class Route
 	public static function getControllerMethod(): string
 	{
 		return self::$RouteNode->controllerMethod;
+	}
+	
+	/**
+	 * Get current request payload
+	 *
+	 * @return null|stdClass|array
+	 */
+	public static function getPayload()
+	{
+		return self::$requestPaylaod;
+	}
+	
+	public static function getRequestID(): int
+	{
+		return self::$requestID;
 	}
 	
 	/**

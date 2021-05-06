@@ -166,7 +166,7 @@ abstract class Manager
 	/**
 	 * Save requests
 	 *
-	 * @param array|null $config - ['model'=>'TSavedRequests']
+	 * @param array|null $config - ['model'=>'\TRequestLog']
 	 * @return array|null
 	 */
 	public final static function saveRequests(array $config = null): ?array

@@ -4,7 +4,6 @@ namespace Infira\Fookie\request;
 
 use Infira\Utils\Http;
 use Infira\Utils\Is;
-use AppConfig;
 
 class Payload
 {
@@ -66,6 +65,11 @@ class Payload
 		self::$data[$name] = $value;
 	}
 	
+	public static function setErrorField(string $name, $value)
+	{
+		self::$error[$name] = $value;
+	}
+	
 	public static function getField(string $name, $returnOnNotFound = null)
 	{
 		if (!self::existsField($name))
@@ -88,7 +92,7 @@ class Payload
 		{
 			$code = 'general';
 		}
-		self::$error['error'] = $code;
+		self::setErrorField('error', $code);
 		if (Is::isClass($error, 'Infira\Error\Error'))
 		{
 			$convert = ['msg' => 'message', 'title' => 'code'];
@@ -98,20 +102,20 @@ class Payload
 				{
 					$name = $convert[$name];
 				}
-				self::$error[$name] = $val;
+				self::setErrorField($name, $val);
 			}
 		}
 		elseif (is_string($error))
 		{
-			self::$error['message'] = $error;
+			self::setErrorField('message', $error);
 		}
 		else
 		{
-			self::$error['message'] = $error;
+			self::setErrorField('message', $error);
 		}
 		foreach (self::$data as $k => $v)
 		{
-			self::$error[$k] = $v;
+			self::setErrorField($k, $v);
 		}
 		self::send();
 	}
@@ -148,14 +152,6 @@ class Payload
 		else
 		{
 			self::$payload = $payload;
-		}
-	}
-	
-	public static function setLoadQuery($query)
-	{
-		if (AppConfig::isDevENV())
-		{
-			self::setField("payloadQuery", $query);
 		}
 	}
 	
