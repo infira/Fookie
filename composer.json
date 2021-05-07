@@ -1,4 +1,4 @@
-{
+ {
   "name": "infira/fookie",
   "description": "Infira fookie framework",
   "authors": [
@@ -30,5 +30,8 @@
 	"infira/cachly": "dev-master",
 	"infira/farray": "dev-main",
 	"infira/autoloader": "dev-main"
+  },
+  "require-dev": {
+	"symfony/console": "v5.*"
   }
 }
