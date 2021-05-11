@@ -172,7 +172,7 @@ class Route
 			self::$RouteNode->name             = $match->name;
 			self::$RouteNode->path             = $requestUrlRoute;
 			self::$RouteNode->isAjax           = (substr($requestUrlRoute, 0, 5) == "ajax/");
-			self::$RouteNode->role = $match->target->role;
+			self::$RouteNode->role             = $match->target->role;
 			
 			if (is_callable($match->target->controller))
 			{
@@ -449,7 +449,7 @@ class Route
 		return self::$requestPaylaod;
 	}
 	
-	public static function getRequestID(): int
+	public static function getRequestID(): ?int
 	{
 		return self::$requestID;
 	}
