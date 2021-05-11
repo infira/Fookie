@@ -9,6 +9,7 @@ use Infira\Fookie\facade\Variable;
 use stdClass;
 use Infira\Fookie\controller\Controller;
 use Infira\Fookie\Fookie;
+use Infira\Utils\Regex;
 
 class Route
 {
@@ -38,11 +39,13 @@ class Route
 		self::$Alto        = new AltoRouterExtendor();
 		self::$RouteNode   = new RouteNode();
 		
-		self::map('system', 'Operation', 'GET', 'op/[:opName]', function ()
+		self::map('system', 'Operation', 'GET', 'op/[:opName]', function ($match)
 		{
+			ini_set('memory_limit', '2024M');
+			set_time_limit(999);
 			$operationController = self::opt('operationController') ? self::opt('operationController') : '\Infira\Fookie\controller\Operation';
 			
-			return (object)['controller' => $operationController, 'method' => 'handle'];
+			return (object)['controller' => $operationController, 'method' => $match->params['opName']];
 		});
 		self::blockHTTPOrigin("chrome-extension://aegnopegbbhjeeiganiajffnalhlkkjb"); //it causes lots of _post requests to server it is that plugin https://chrome.google.com/webstore/detail/browser-safety/aegnopegbbhjeeiganiajffnalhlkkjb
 		self::setMatchType('entity', '[A-Za-z]++');
@@ -169,7 +172,7 @@ class Route
 			self::$RouteNode->name             = $match->name;
 			self::$RouteNode->path             = $requestUrlRoute;
 			self::$RouteNode->isAjax           = (substr($requestUrlRoute, 0, 5) == "ajax/");
-			self::$RouteNode->role             = $match->target->role;
+			self::$RouteNode->role = $match->target->role;
 			
 			if (is_callable($match->target->controller))
 			{
@@ -292,6 +295,12 @@ class Route
 		$controllerName = self::getControllerName();
 		addExtraErrorInfo("currentControllerName", $controllerName);
 		$methodName = self::$RouteNode->controllerMethod;
+		if (Regex::isMatch('/\[param:(.*)\]/m', $methodName))
+		{
+			preg_match_all('/\[param:(.*)\]/m', $methodName, $matches);
+			$paramName  = $matches[1][0];
+			$methodName = self::$RouteNode->params[$paramName];
+		}
 		
 		$Controller = self::getController();
 		$Controller->authorize();
@@ -333,6 +342,10 @@ class Route
 	
 	public static function map(string $role, string $name, string $requestMethod, string $requestPath, $controller)
 	{
+		if (!self::$RouteNode)
+		{
+			Fookie::error('Route is not inited');
+		}
 		if (isset(self::$routes[$role][$name]))
 		{
 			Fookie::error("Route $role.$name is already defined", null, 500);

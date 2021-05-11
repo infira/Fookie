@@ -4,14 +4,11 @@ namespace Infira\Fookie\Smurf;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
-
 use Infira\Poesis\modelGenerator\Options;
 use Infira\Poesis\modelGenerator\Generator;
 use Infira\Poesis\ConnectionManager;
 use Infira\Poesis\Connection;
-
 use File;
 use Db;
 use Infira\Utils\Dir;
@@ -193,8 +190,8 @@ class SmurfDb extends SmurfCommand
 				foreach ($queries as $q)
 				{
 					Db::realQuery($q);
-					$this->message('<info>installed trigger: </info>' . $fn);
 				}
+				$this->message('<info>installed trigger: </info>' . $fn);
 			}
 		}
 	}

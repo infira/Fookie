@@ -16,9 +16,9 @@ class KeyData
 	}
 	
 	
-	public static function get($name)
+	public static function get(string $name)
 	{
-		return Rm::once(['KeyData->get', $name], function () use (&$name)
+		return Rm::magic(function () use (&$name)
 		{
 			$Db       = new \TKeyData();
 			$Db->name = $name;
@@ -29,14 +29,11 @@ class KeyData
 				{
 					$obj->data = unserialize($obj->data);
 				}
-				$value = $obj->data;
-			}
-			else
-			{
-				$value = UNDEFINDED;
+				
+				return $obj->data;
 			}
 			
-			return $value;
+			return null;
 		});
 	}
 	

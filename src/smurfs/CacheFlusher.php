@@ -5,11 +5,9 @@ namespace Infira\Fookie\Smurf;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Infira\Fookie\facade\Variable;
-use Db;
-use Infira\Utils\File;
 use Infira\Fookie\facade\Cache;
 use Infira\Cachly\Cachly;
+use Tpl;
 
 class CacheFlusher extends SmurfCommand
 {
@@ -92,8 +90,8 @@ class CacheFlusher extends SmurfCommand
 	
 	public function flushCompiledSmartyTemplates()
 	{
-		\Tpl::Smarty()->clearAllCache();
-		\Tpl::Smarty()->clearCompiledTemplate();
+		Tpl::clearAllCache();
+		Tpl::clearCompiledTemplate();
 		
 		$this->info('smarty templates flushed');
 	}

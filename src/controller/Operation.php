@@ -8,27 +8,7 @@ use Db;
 
 class Operation extends Controller
 {
-	public final function handle($return = false)
-	{
-		ini_set('memory_limit', '2024M');
-		set_time_limit(999);
-		$name = Http::getGET("opName");
-		if (method_exists($this, $name))
-		{
-			//define("VOID_PROFILER", TRUE);
-			$output = $this->$name();
-			if (!$output)
-			{
-				return 'ok';
-			}
-		}
-		else
-		{
-			return "Operatsiooni($name) ei leitud";
-		}
-	}
-	
-	public function touch()
+	public function touch(): string
 	{
 		return "Session touched";
 	}
