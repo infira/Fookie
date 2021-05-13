@@ -80,8 +80,7 @@ class Mailer extends \PHPMailer\PHPMailer\PHPMailer
 	{
 		if (!file_exists($path))
 		{
-			addExtraErrorInfo("path", $path);
-			alertEmail("File does not exists");
+			return null;
 		}
 		parent::addAttachment($path, $name, $encoding, $type, $disposition);
 	}
