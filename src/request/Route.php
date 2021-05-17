@@ -51,7 +51,7 @@ class Route
 		self::setMatchType('entity', '[A-Za-z]++');
 	}
 	
-	public static function getRequestUrl()
+	public static function getRequestURI()
 	{
 		$ex  = explode('?', $_SERVER['REQUEST_URI'], 2);
 		$url = trim($ex[0]);
@@ -145,7 +145,7 @@ class Route
 				$addRoutes($routes, $role);
 			}
 		}
-		$requestUrlRoute = self::getRequestUrl();
+		$requestUrlRoute = self::getRequestURI();
 		$match           = self::$Alto->match($requestUrlRoute);
 		//debug(['$match' => $match]);
 		if (!$match)
@@ -284,6 +284,16 @@ class Route
 				$db->uri($_SERVER['REQUEST_URI']);
 				$db->insert();
 				self::$requestID = $db->getLastSaveID();
+				$currentUrl = Http::getCurrentUrl();
+				if (strpos($currentUrl, '?') !== false)
+				{
+					$repLink = $currentUrl . '&_rrid=' . self::$requestID;
+				}
+				else
+				{
+					$repLink = $currentUrl . '?_rrid=' . self::$requestID;
+				}
+				addExtraErrorInfo('errorReplicateLink', $repLink);
 				Payload::setRequestID(self::$requestID);
 			}
 		}
