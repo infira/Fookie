@@ -460,9 +460,9 @@ class Route
 	 * @param string $name
 	 * @return bool
 	 */
-	public static function is(string $name)
+	public static function is(string $name): bool
 	{
-		return (self::$RouteNode->name == $name);
+		return (self::$RouteNode->name === self::convert2RoleName($name));
 	}
 	
 	public static function isMatched(): bool
@@ -476,9 +476,25 @@ class Route
 	 * @param string|array $names
 	 * @return bool
 	 */
-	public static function in($names)
+	public static function in($names): bool
 	{
-		return (in_array(self::$RouteNode->name, Variable::toArray($names)));
+		$names = Variable::toArray($names);
+		array_walk($names, function (&$name)
+		{
+			$name = self::convert2RoleName($name);
+		});
+		
+		return in_array(self::$RouteNode->name, $names, true);
+	}
+	
+	private static function convert2RoleName(string $name): string
+	{
+		if (strpos($name, '.') === false)
+		{
+			$name = self::$role . '.' . $name;
+		}
+		
+		return $name;
 	}
 	
 	public static function blockHTTPOrigin($origin)
@@ -514,14 +530,7 @@ class Route
 		}
 		elseif ($pathOrName{0} != '/')
 		{
-			if (strpos($pathOrName, '.') === false)
-			{
-				$routeName = self::$role . '.' . $pathOrName;
-			}
-			else
-			{
-				$routeName = $pathOrName;
-			}
+			$routeName = self::convert2RoleName($pathOrName);
 			
 			return "/" . self::$Alto->generate($routeName, $params);
 		}
