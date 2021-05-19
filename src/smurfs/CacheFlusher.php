@@ -4,31 +4,23 @@ namespace Infira\Fookie\Smurf;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Infira\Fookie\facade\Cache;
-use Infira\Cachly\Cachly;
-use Tpl;
+use Symfony\Component\Console\Input\InputOption;
+use Infira\Fookie\Flush;
 
 class CacheFlusher extends SmurfCommand
 {
-	private $vars = [];
+	private $configs = [];
 	
-	private $updateFile    = null;
-	private $phpScriptPath = null;
-	
-	public function addVar(string $name, $value)
+	public function __construct(string $name = null)
 	{
-		$this->vars[$name] = $value;
+		$this->addConfig('cache', 'c', 'flushCache');
+		parent::__construct($name);
 	}
 	
-	protected function setUpdateFile(string $file)
+	protected function addConfig(string $name, string $shortcut, string $method)
 	{
-		$this->updateFile = $file;
-	}
-	
-	protected function setPhpScriptPath(string $path)
-	{
-		$this->phpScriptPath = $path;
+		$this->configs[$name] = ['method' => $method, 'shortcut' => $shortcut];
 	}
 	
 	/**
@@ -36,9 +28,11 @@ class CacheFlusher extends SmurfCommand
 	 */
 	protected function configure(): void
 	{
-		$this->setName('flush')
-			->addOption('cache', 'c', InputOption::VALUE_NONE, 'Reset all')
-			->addOption('smarty', 's', InputOption::VALUE_NONE, 'Flush');
+		$c = $this->setName('flush');
+		foreach ($this->configs as $name => $config)
+		{
+			$c = $c->addOption($name, $config['shortcut'], InputOption::VALUE_NONE);
+		}
 	}
 	
 	/**
@@ -52,48 +46,35 @@ class CacheFlusher extends SmurfCommand
 		$this->beforeExecute();
 		set_time_limit(7200);
 		
-		if ($input->getOption('cache'))
+		$found = false;
+		foreach ($this->configs as $name => $config)
 		{
-			$this->flushCache();
+			if ($input->getOption($name))
+			{
+				$method = $config['method'];
+				$this->$method();
+				$found = true;
+				break;
+			}
 		}
-		elseif ($input->getOption('smarty'))
+		if (!$found)
 		{
-			$this->flushCompiledSmartyTemplates();
-		}
-		else
-		{
-			$this->flushCache();
-			$this->flushCompiledSmartyTemplates();
+			foreach ($this->configs as $name => $config)
+			{
+				$method = $config['method'];
+				$this->$method();
+			}
 		}
 		
 		
 		return $this->success();
 	}
 	
-	function flushCache()
+	protected function flushCache()
 	{
 		Cache::init();
-		if (Cache::isConfigured(Cachly::FILE))
-		{
-			Cache::$Driver->File->flush();
-		}
-		if (Cache::isConfigured(Cachly::SESS))
-		{
-			Cache::$Driver->Sess->flush();
-		}
-		if (Cache::isConfigured(Cachly::DB))
-		{
-			Cache::$Driver->Db->flush();
-		}
+		Flush::cache();
 		$this->info('Cachly flushed');
-	}
-	
-	public function flushCompiledSmartyTemplates()
-	{
-		Tpl::clearAllCache();
-		Tpl::clearCompiledTemplate();
-		
-		$this->info('smarty templates flushed');
 	}
 }
 
