@@ -10,6 +10,7 @@ use stdClass;
 use Infira\Fookie\controller\Controller;
 use Infira\Fookie\Fookie;
 use Infira\Utils\Regex;
+use Rm;
 
 class Route
 {
@@ -269,7 +270,6 @@ class Route
 				$headers                   = (array)json_decode($req->headers);
 				$post                      = (array)json_decode($req->post);
 				addExtraErrorInfo('saved$req', $req);
-				addExtraErrorInfo('errorReplicateLink', Http::getCurrentUrl());
 				addExtraErrorInfo('$controllerMethodArguments', $controllerMethodArguments);
 				Http::flushPOST($post);
 				$_SERVER['REQUEST_METHOD'] = $req->method;
@@ -284,7 +284,7 @@ class Route
 				$db->uri($_SERVER['REQUEST_URI']);
 				$db->insert();
 				self::$requestID = $db->getLastSaveID();
-				$currentUrl = Http::getCurrentUrl();
+				$currentUrl      = Http::getCurrentUrl();
 				if (strpos($currentUrl, '?') !== false)
 				{
 					$repLink = $currentUrl . '&_rrid=' . self::$requestID;
@@ -294,6 +294,7 @@ class Route
 					$repLink = $currentUrl . '?_rrid=' . self::$requestID;
 				}
 				addExtraErrorInfo('errorReplicateLink', $repLink);
+				Rm::set('errorReplicateLink', $repLink);
 				Payload::setRequestID(self::$requestID);
 			}
 		}
