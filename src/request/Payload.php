@@ -4,7 +4,7 @@ namespace Infira\Fookie\request;
 
 use Infira\Utils\Http;
 use Infira\Utils\Is;
-use Rm;
+use Infira\Fookie\facade\Rm;
 
 class Payload
 {

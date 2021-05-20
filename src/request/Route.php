@@ -10,7 +10,7 @@ use stdClass;
 use Infira\Fookie\controller\Controller;
 use Infira\Fookie\Fookie;
 use Infira\Utils\Regex;
-use Rm;
+use Infira\Fookie\facade\Rm;
 
 class Route
 {

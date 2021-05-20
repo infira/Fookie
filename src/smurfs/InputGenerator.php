@@ -75,7 +75,7 @@ class InputGenerator extends SmurfCommand
 			$vars->namespace   = $this->namespace ? 'namespace ' . $this->namespace . ';' : self::REMOVE_EMPTY_LINE;
 			$vars->description = 'Reqest body inputs for enpoint' . $name;
 			$vars->name        = Variable::ucFirst($name) . 'Schema';
-			if (isset($epConfig->properties))
+			if (isset($epConfig->properties) or isset($epConfig->allOf))
 			{
 				$properties       = $this->getProperties(clone $epConfig, [], $name);
 				$vars->properties = [];
