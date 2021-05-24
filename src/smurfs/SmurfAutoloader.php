@@ -4,8 +4,8 @@ namespace Infira\Fookie\Smurf;
 
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
 use Infira\Autoloader\Autoloader;
+use Symfony\Component\Console\Input\InputOption;
 
 class SmurfAutoloader extends SmurfCommand
 {
@@ -28,7 +28,8 @@ class SmurfAutoloader extends SmurfCommand
 	 */
 	protected function configure(): void
 	{
-		$this->setName('autoloader');
+		$this->setName('autoloader')
+			->addOption('silent', 's', InputOption::VALUE_NONE, 'Silent');;
 	}
 	
 	/**
@@ -70,7 +71,10 @@ class SmurfAutoloader extends SmurfCommand
 				else
 				{
 					$spaces = str_repeat(' ', $max - strlen($name));
-					$this->message('<info>generated:' . $name . $spaces . ' </info>' . $file);
+					if (!$input->getOption('silent'))
+					{
+						$this->message('<info>generated:' . $name . $spaces . ' </info>' . $file);
+					}
 				}
 			}
 		}

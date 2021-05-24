@@ -81,7 +81,7 @@ class InputGenerator extends SmurfCommand
 				$vars->properties = [];
 				foreach ($properties as $property => $propertyCnf)
 				{
-					$vars->properties[] = $this->makeClassProperty($property, $propertyCnf);
+					$vars->properties[] = $this->makeClassProperty($property, $propertyCnf, 'Schema');
 				}
 				$vars->properties = join("\n", $vars->properties);
 				$this->makeFile($this->installPath . '/' . $vars->name . '.php', Variable::assign((array)$vars, file_get_contents(__DIR__ . '/' . 'openApiSchemaTemplate.txt')));
@@ -153,7 +153,7 @@ class InputGenerator extends SmurfCommand
 		}
 	}
 	
-	private function makeClassProperty(string $property, stdClass $propertyCnf): string
+	private function makeClassProperty(string $property, stdClass $propertyCnf, string $refClassNameSufix = ''): string
 	{
 		$value = 'null';
 		if (!property_exists($propertyCnf, 'required'))
@@ -214,10 +214,16 @@ class InputGenerator extends SmurfCommand
 			$type[] = 'max=' . $propertyCnf->maximum;
 		}
 		
+		$varType = $propertyCnf->type;
+		if ($varType == 'object' and isset($propertyCnf->refName))
+		{
+			$varType = Variable::ucFirst($propertyCnf->refName . $refClassNameSufix);
+		}
+		
 		return '
 	/**
 	 * ' . addslashes($description) . '
-	 * @var ' . $propertyCnf->type . ' ' . join(', ', $type) . '
+	 * @var ' . $varType . ' ' . join(', ', $type) . '
 	 */
 	public $' . $property . ' = ' . $value . ';
 	';

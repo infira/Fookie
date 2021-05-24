@@ -49,6 +49,7 @@ class JSONParser
 			//addExtraErrorInfo('$output', $output);
 			$output = $output->$cmp;
 		}
+		$output->refName = $cmp;
 		
 		return (object)(array)$output;
 	}

@@ -2,73 +2,67 @@
 
 namespace Infira\Fookie;
 
+use Db;
+
 class Log
 {
 	private static $userID = 0;
 	
-	/**
-	 * Log event
-	 *
-	 * @param string $title
-	 * @param mixed  $content
-	 * @return int - returns log ID
-	 */
 	public static function make(string $title, $content): int
 	{
-		$Db = new \TLog();
-		$Db->event($title);
-		$Db->userID = self::$userID;
+		$db = Db::TLog();
+		$db->title($title);
+		
+		$db->userID(self::$userID);
 		if (isSerializable($content))
 		{
-			$Db->isSerialized = 1;
+			$db->isSerialized = 1;
 			$content          = serialize($content);
 		}
 		else
 		{
-			$Db->isSerialized(0);
+			$db->isSerialized(0);
 			alert("Cant serialize");
 		}
-		$Db->content($content);
-		$Db->ts->now();
-		$Db->ip = getUserIP();
-		$Db->insert();
+		$db->content($content);
+		$db->insertDate->now();
+		$db->ip(getUserIP());
+		$db->insert();
 		
-		return $Db->getLastSaveID();
+		return $db->getLastSaveID();
 	}
 	
-	/**
-	 * @param int|string $ID log ID or string 'last"
-	 * @return string
-	 */
-	public static function getContent($ID): string
+	public static function getContent($ID): ?string
 	{
-		$Db = new \TLog();
+		$db = Db::TLog();
 		if ($ID === 'last')
 		{
-			$Db->orderBy("ID DESC");
-			$Db->limit(1);
+			$db->orderBy("ID DESC");
+			$db->limit(1);
 		}
 		else
 		{
-			$Db->ID($ID);
+			$db->ID($ID);
 		}
-		$Obj = $Db->select()->getObject();
+		$Obj = $db->select()->getObject();
 		if (is_object($Obj))
 		{
 			if ($Obj->isSerialized == 1)
 			{
-				debug(unserialize($Obj->content));
+				return unserialize($Obj->content);
 			}
 			else
 			{
-				debug($Obj->content);
+				return $Obj->content;
 			}
 		}
+		
+		return null;
 	}
 	
-	public static function setUserID(int $userID): void
+	public static function setUserID(int $ID)
 	{
-		self::$userID = $userID;
+		self::$userID = $ID;
 	}
 }
 
