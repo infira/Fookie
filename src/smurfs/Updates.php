@@ -2,9 +2,6 @@
 
 namespace Infira\Fookie\Smurf;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Infira\Fookie\facade\Variable;
 use Db;
 use Infira\Utils\File;
@@ -28,6 +25,13 @@ class Updates extends SmurfCommand
 	private $updateFile    = null;
 	private $phpScriptPath = null;
 	
+	public function __construct()
+	{
+		$this->addConfig('reset', 'r');
+		$this->addConfig('flush', 'f');
+		parent::__construct('updates');
+	}
+	
 	public function addVar(string $name, $value)
 	{
 		$this->vars[$name] = $value;
@@ -43,40 +47,19 @@ class Updates extends SmurfCommand
 		$this->phpScriptPath = $path;
 	}
 	
-	/**
-	 * @return void
-	 */
-	protected function configure(): void
+	protected function runCommand()
 	{
-		$this->setName('updates')
-			->addOption('reset', 'r', InputOption::VALUE_NONE, 'Reset all')
-			->addOption('flush', 'f', InputOption::VALUE_NONE, 'Flush');
-	}
-	
-	/**
-	 * @param InputInterface  $input
-	 * @param OutputInterface $output
-	 * @return int
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output): int
-	{
-		$this->output = &$output;
-		$this->beforeExecute();
-		set_time_limit(7200);
-		
-		
-		$lines   = file($this->updateFile);
-		$isReset = $input->getOption('reset');
+		$lines = file($this->updateFile);
 		
 		// Loop through each line
 		$templine = "";
 		$queries  = [];
-		if ($isReset or $input->getOption('flush'))
+		if ($this->input->getOption('reset') or $this->input->getOption('flush'))
 		{
 			Db::TSqlUpdates()->truncate();
-			if ($input->getOption('flush'))
+			if ($this->input->getOption('flush'))
 			{
-				return $this->success();
+				return;
 			}
 		}
 		foreach ($lines as $line)
@@ -141,7 +124,7 @@ class Updates extends SmurfCommand
 					{
 						$fileName   = substr($query, 10, -1);
 						$scriptFile = $this->phpScriptPath . $fileName;
-						if (!$isReset)
+						if (!$this->input->getOption('reset'))
 						{
 							$this->runPhpScript($scriptFile);
 						}
@@ -151,7 +134,7 @@ class Updates extends SmurfCommand
 					}
 					else
 					{
-						if (!$isReset)
+						if (!$this->input->getOption('reset'))
 						{
 							Db::realQuery($query);
 						}
@@ -162,8 +145,6 @@ class Updates extends SmurfCommand
 			}
 		}
 		$this->info('Everything is up to date');
-		
-		return $this->success();
 	}
 	
 	

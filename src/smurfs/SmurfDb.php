@@ -2,9 +2,6 @@
 
 namespace Infira\Fookie\Smurf;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Infira\Poesis\modelGenerator\Options;
 use Infira\Poesis\modelGenerator\Generator;
 use Infira\Poesis\ConnectionManager;
@@ -29,6 +26,13 @@ class SmurfDb extends SmurfCommand
 	 * @var Connection
 	 */
 	private $dbConnection = null;
+	
+	public function __construct()
+	{
+		$this->addConfig('views', 'w', 'runViews');
+		$this->addConfig('models', 'm', 'runModels');
+		parent::__construct('db');
+	}
 	
 	/**
 	 * @param Connection|null $dbConnection
@@ -124,47 +128,27 @@ class SmurfDb extends SmurfCommand
 		}
 	}
 	
-	/**
-	 * @return void
-	 */
-	protected function configure(): void
+	protected function runCommand()
 	{
-		$this->setName('db')
-			->addOption('models', 'm', InputOption::VALUE_NONE, 'Models')
-			->addOption('views', 'w', InputOption::VALUE_NONE, 'Views');
+		$this->Options = new Options();
 	}
 	
-	/**
-	 * @param InputInterface  $input
-	 * @param OutputInterface $output
-	 * @return int
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output): int
+	public function runModels()
 	{
-		$this->output  = &$output;
-		$this->input   = &$input;
-		$this->Options = new Options();
-		$this->beforeExecute();
-		
-		if ($input->getOption('views'))
+		$this->beforeExecute_Models();
+		$this->dbConnection = $this->dbConnection ? $this->dbConnection : ConnectionManager::default();
+		$gen                = new Generator($this->dbConnection, $this->Options);
+		foreach ($gen->generate($this->installPath) as $file)
 		{
-			$this->beforeExecute_Views();
-			$this->views();
-			$this->triggers();
+			$this->message('<info>generated model: </info>' . $file);
 		}
-		if ($input->getOption('models'))
-		{
-			$this->beforeExecute_Models();
-			$this->dbConnection = $this->dbConnection ? $this->dbConnection : ConnectionManager::default();
-			$gen                = new Generator($this->dbConnection, $this->Options);
-			foreach ($gen->generate($this->installPath) as $file)
-			{
-				$this->message('<info>generated model: </info>' . $file);
-			}
-		}
-		$this->afterExecute();
-		
-		return $this->success();
+	}
+	
+	public function runViews()
+	{
+		$this->beforeExecute_Views();
+		$this->views();
+		$this->triggers();
 	}
 	
 	public function views()

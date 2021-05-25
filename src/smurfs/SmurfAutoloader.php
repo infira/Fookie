@@ -2,14 +2,17 @@
 
 namespace Infira\Fookie\Smurf;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Infira\Autoloader\Autoloader;
-use Symfony\Component\Console\Input\InputOption;
 
 class SmurfAutoloader extends SmurfCommand
 {
 	private $autoloaderConfigLocations = [];
+	
+	public function __construct()
+	{
+		$this->addConfig('silent', 'c');
+		parent::__construct('autoloader');
+	}
 	
 	protected function addAutoloaderConfig(string $file, string $prefix = null)
 	{
@@ -23,26 +26,13 @@ class SmurfAutoloader extends SmurfCommand
 		}
 	}
 	
-	/**
-	 * @return void
-	 */
-	protected function configure(): void
+	protected function beforeExecute()
 	{
-		$this->setName('autoloader')
-			->addOption('silent', 's', InputOption::VALUE_NONE, 'Silent');;
+		$this->addAutoloaderConfig(realpath(__DIR__ . '/../') . '/config/autoloader.json', realpath(__DIR__ . '/../') . '/');
 	}
 	
-	/**
-	 * @param InputInterface  $input
-	 * @param OutputInterface $output
-	 * @return int
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output): int
+	protected function runCommand()
 	{
-		$this->output = &$output;
-		$this->addAutoloaderConfig(realpath(__DIR__ . '/../') . '/config/autoloader.json', realpath(__DIR__ . '/../') . '/');
-		$this->beforeExecute();
-		
 		$errors = false;
 		if (!$this->isTest())
 		{
@@ -71,7 +61,7 @@ class SmurfAutoloader extends SmurfCommand
 				else
 				{
 					$spaces = str_repeat(' ', $max - strlen($name));
-					if (!$input->getOption('silent'))
+					if (!$this->input->getOption('silent'))
 					{
 						$this->message('<info>generated:' . $name . $spaces . ' </info>' . $file);
 					}
@@ -86,8 +76,6 @@ class SmurfAutoloader extends SmurfCommand
 		{
 			$this->info('Autoloader installed');
 		}
-		
-		return $this->success();
 	}
 }
 

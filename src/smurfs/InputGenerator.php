@@ -2,8 +2,6 @@
 
 namespace Infira\Fookie\Smurf;
 
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Infira\Fookie\facade\Variable;
 use stdClass;
 use File;
@@ -22,6 +20,11 @@ class InputGenerator extends SmurfCommand
 	 */
 	private $parser;
 	
+	public function __construct()
+	{
+		parent::__construct('inputs');
+	}
+	
 	public function setSwaggerJsonPath(string $swaggerJsonPath): void
 	{
 		$this->swaggerJsonPath = $swaggerJsonPath;
@@ -37,34 +40,13 @@ class InputGenerator extends SmurfCommand
 		$this->namespace = $namespace;
 	}
 	
-	
-	/**
-	 * @return void
-	 */
-	protected function configure(): void
+	protected function runCommand()
 	{
-		$this->setName('inputs');
-	}
-	
-	/**
-	 * @param InputInterface  $input
-	 * @param OutputInterface $output
-	 * @return int
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output): int
-	{
-		$this->output = &$output;
-		$this->input  = &$input;
-		
-		$this->beforeExecute();
 		$this->parser = new JSONParser($this->swaggerJsonPath);
 		
 		Dir::flush($this->installPath);
 		$this->makeSchemas();
 		$this->makeInputs();
-		$this->afterExecute();
-		
-		return $this->success();
 	}
 	
 	private function makeSchemas()

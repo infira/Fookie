@@ -5,14 +5,77 @@ namespace Infira\Fookie\Smurf;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputInterface;
 
-class SmurfCommand extends Command
+abstract class SmurfCommand extends Command
 {
 	/**
 	 * @var OutputInterface
 	 */
 	protected $output;
 	protected $input;
+	private   $configs = [];
+	
+	public function __construct(string $name = null)
+	{
+		parent::__construct($name);
+	}
+	
+	protected function addConfig(string $name, string $shortcut, string $method = null)
+	{
+		$this->configs[$name] = ['method' => $method, 'shortcut' => $shortcut];
+	}
+	
+	protected function configure(): void
+	{
+		$c = $this;
+		foreach ($this->configs as $name => $config)
+		{
+			$c = $c->addOption($name, $config['shortcut'], InputOption::VALUE_NONE);
+		}
+	}
+	
+	/**
+	 * @param InputInterface  $input
+	 * @param OutputInterface $output
+	 * @return int
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output): int
+	{
+		set_time_limit(7200);
+		$this->output = &$output;
+		$this->input  = &$input;
+		$this->beforeExecute();
+		$this->runCommand();
+		$found = false;
+		foreach ($this->configs as $name => $config)
+		{
+			if ($input->getOption($name))
+			{
+				if ($config['method'] !== null)
+				{
+					$method = $config['method'];
+					$this->$method();
+					$found = true;
+				}
+			}
+		}
+		if (!$found)
+		{
+			foreach ($this->configs as $config)
+			{
+				if ($config['method'] !== null)
+				{
+					$method = $config['method'];
+					$this->$method();
+				}
+			}
+		}
+		$this->afterExecute();
+		
+		return $this->success();
+	}
 	
 	protected function isTest()
 	{
@@ -67,13 +130,14 @@ class SmurfCommand extends Command
 		return Command::SUCCESS;
 	}
 	
-	protected function beforeExecute()
-	{
-		//void
-	}
+	protected function beforeExecute() { }
 	
 	protected function afterExecute()
 	{
 		//void
 	}
+	
+	protected function runCommand() { }
 }
+
+?>
