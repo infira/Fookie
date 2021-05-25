@@ -35,6 +35,7 @@ abstract class Manager
 			ConfigEntries::addDefaultValue("dbCacheDriver", "sess");
 			ConfigEntries::addDefaultValue("__configIsIntialized", true);
 			ConfigEntries::addDefaultValue("voidDbTableClassInstall", []);
+			ConfigEntries::addDefaultValue("logModel", '\TLog');
 			self::routeCurrent('web');
 			self::routeDefaultRole('web');
 			self::routeRoles(['web']);
@@ -172,6 +173,17 @@ abstract class Manager
 	public final static function saveRequests(array $config = null): ?array
 	{
 		return self::setGetVar("saveRequests", $config);
+	}
+	
+	/**
+	 * Save requests
+	 *
+	 * @param string|null $model - ['model'=>'\TLog']
+	 * @return string|null
+	 */
+	public final static function logModel(string $model = null): ?string
+	{
+		return self::setGetVar("logModel", $model);
 	}
 	
 	/**

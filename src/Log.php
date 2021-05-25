@@ -2,7 +2,7 @@
 
 namespace Infira\Fookie;
 
-use Db;
+use Infira\Poesis\orm\Model;
 
 class Log
 {
@@ -10,9 +10,8 @@ class Log
 	
 	public static function make(string $title, $content): int
 	{
-		$db = Db::TLog();
+		$db = self::getModel();
 		$db->title($title);
-		
 		$db->userID(self::$userID);
 		if (isSerializable($content))
 		{
@@ -25,7 +24,6 @@ class Log
 			alert("Cant serialize");
 		}
 		$db->content($content);
-		$db->insertDate->now();
 		$db->ip(getUserIP());
 		$db->insert();
 		
@@ -34,7 +32,7 @@ class Log
 	
 	public static function getContent($ID): ?string
 	{
-		$db = Db::TLog();
+		$db = self::getModel();
 		if ($ID === 'last')
 		{
 			$db->orderBy("ID DESC");
@@ -63,6 +61,13 @@ class Log
 	public static function setUserID(int $ID)
 	{
 		self::$userID = $ID;
+	}
+	
+	private static function getModel(): Model
+	{
+		$model = \AppConfig::logModel();
+		
+		return new $model();
 	}
 }
 
