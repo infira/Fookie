@@ -173,7 +173,15 @@ class SmurfDb extends SmurfCommand
 		{
 			if (!in_array($fn, $this->voidDbFiles['views']))
 			{
-				Db::fileQuery($fn);
+				try
+				{
+					Db::fileQuery($fn);
+				}
+				catch (\Exception $e)
+				{
+					$this->error($e->getMessage());
+					exit;
+				}
 				$this->message('<info>installed view: </info>' . $fn);
 			}
 		}
@@ -189,7 +197,15 @@ class SmurfDb extends SmurfCommand
 				$queries = explode("[TSP]", $con);
 				foreach ($queries as $q)
 				{
-					Db::realQuery($q);
+					try
+					{
+						Db::realQuery($q);
+					}
+					catch (\Exception $e)
+					{
+						$this->error($e->getMessage());
+						exit;
+					}
 				}
 				$this->message('<info>installed trigger: </info>' . $fn);
 			}

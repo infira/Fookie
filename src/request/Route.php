@@ -294,7 +294,7 @@ class Route
 					$repLink = $currentUrl . '?_rrid=' . self::$requestID;
 				}
 				addExtraErrorInfo('errorReplicateLink', $repLink);
-				Rm::set('errorReplicateLink', $repLink);
+				Rm::set('requestReplicateLink', $repLink);
 				Payload::setRequestID(self::$requestID);
 			}
 		}

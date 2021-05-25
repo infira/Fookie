@@ -9,6 +9,18 @@ use Infira\Fookie\facade\Variable;
 use Db;
 use Infira\Utils\File;
 
+/*
+SELF UPDATES
+ALTER TABLE `sql_updates` DROP PRIMARY KEY;
+ALTER TABLE `sql_updates` ADD `hash` VARCHAR(35) NULL DEFAULT NULL FIRST;
+UPDATE sql_updates SET hash = md5();
+ALTER TABLE `sql_updates` ADD PRIMARY KEY(`hash`);
+ALTER TABLE `sql_updates` ADD `ts` TIMESTAMP(6) on update CURRENT_TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) AFTER `installed`;
+ALTER TABLE `sql_updates` CHANGE `content` `sqlQuery` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL;
+ALTER TABLE `sql_updates` ADD `rawQuery` LONGTEXT NULL DEFAULT NULL AFTER `sqlQuery`;
+ALTER TABLE `sql_updates` ADD `phpScriptFileName` LONGTEXT NOT NULL AFTER `rawQuery`;
+ */
+
 class Updates extends SmurfCommand
 {
 	private $vars = [];
@@ -91,29 +103,40 @@ class Updates extends SmurfCommand
 				}
 			}
 		}
+		$isSystem = 1; //later when CMS is implemented this is needed
 		if (checkArray($queries))
 		{
-			$dbUpdates = $dbUpdates = Db::TSqlUpdates()->select()->getValueAsKey("updateNr", true);
-			foreach ($queries as $updateNr => $query)
+			$dbUpdates = Db::TSqlUpdates()->select()->getValueAsKey("hash");
+			
+			foreach ($queries as $updateNr => $rawQuery)
 			{
-				$ok = true;
-				if (isset($dbUpdates[$updateNr]))
+				$ok   = true;
+				$hash = md5($rawQuery . $isSystem . $updateNr);
+				if (isset($dbUpdates[$hash]))
 				{
-					if ($dbUpdates[$updateNr]->installed == 1)
+					if ($dbUpdates[$hash]["installed"] == 1)
 					{
 						$ok = false;
 					}
 				}
-				if (substr($query, 0, 6) == "void--")
+				$void = false;
+				if (substr($rawQuery, 0, 7) == "--void:")
 				{
-					$ok = false;
+					$void = true;
 				}
+				addExtraErrorInfo('hash', $hash);
+				addExtraErrorInfo('$rawQuery', $rawQuery);
 				if ($ok === true)
 				{
-					$query         = Variable::assign($this->vars, $query);
-					$Db            = Db::TSqlUpdates();
-					$Db->updateNr  = $updateNr;
-					$Db->installed = 1;
+					$Db = Db::TSqlUpdates();
+					$Db->hash($hash);
+					$Db->updateNr($updateNr);
+					//$Db->isSystem ($isSystem);
+					$Db->installed(1);
+					$Db->rawQuery($rawQuery);
+					$query = Variable::assign($this->vars, $rawQuery);
+					$Db->sqlQuery($query);
+					addExtraErrorInfo('$query', $query);
 					if (substr($query, 0, 10) == "phpScript:")
 					{
 						$fileName   = substr($query, 10, -1);
@@ -122,9 +145,8 @@ class Updates extends SmurfCommand
 						{
 							$this->runPhpScript($scriptFile);
 						}
-						
-						$Db->phpScript($query);
-						$Db->content(File::getContent($scriptFile));
+						$Db->phpScriptFileName($scriptFile);
+						$Db->phpScript(File::getContent($scriptFile));
 						$this->message('<fg=#cc00ff>PHP script</>: ' . $scriptFile);
 					}
 					else
@@ -133,7 +155,6 @@ class Updates extends SmurfCommand
 						{
 							Db::realQuery($query);
 						}
-						$Db->content($query);
 						$this->message('<fg=#00aaff>SQL query</>: ' . $query);
 					}
 					$Db->insert();

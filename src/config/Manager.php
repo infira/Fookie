@@ -231,6 +231,13 @@ abstract class Manager
 	abstract public static function isLiveENV(): bool;
 	
 	/**
+	 * Check is current environment livelike (beta,live) acts like a live envinronment
+	 *
+	 * @return bool
+	 */
+	abstract public static function isLiveWorthy(): bool;
+	
+	/**
 	 * Check is current environment dev
 	 *
 	 * @return bool

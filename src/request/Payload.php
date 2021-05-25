@@ -88,10 +88,7 @@ class Payload
 	
 	public static function sendError($error, string $code = null, $httpStatusCode = 400)
 	{
-		if (Rm::exists('errorReplicateLink'))
-		{
-			self::setField('errorReplicateLink', Rm::get('errorReplicateLink'));
-		}
+		self::attachReplicateLink();
 		http_response_code($httpStatusCode);
 		if (!$code)
 		{
@@ -123,6 +120,15 @@ class Payload
 			self::setErrorField($k, $v);
 		}
 		self::send();
+	}
+	
+	public static function attachReplicateLink()
+	{
+		if (Rm::exists('requestReplicateLink'))
+		{
+			self::setField('replicateLink', Rm::get('requestReplicateLink'));
+			self::setField('requestID', Route::getRequestID());
+		}
 	}
 	
 	/**
