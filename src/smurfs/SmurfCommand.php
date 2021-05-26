@@ -14,17 +14,35 @@ abstract class SmurfCommand extends Command
 	 * @var OutputInterface
 	 */
 	protected $output;
+	/**
+	 * @var InputInterface
+	 */
 	protected $input;
-	private   $configs = [];
+	private   $configs         = [];
+	private   $methodArguments = [];
 	
 	public function __construct(string $name = null)
 	{
 		parent::__construct($name);
 	}
 	
-	protected function addConfig(string $name, string $shortcut, string $method = null)
+	protected function addConfig(string $name, ?string $shortcut, string $method = null, int $mode = null)
 	{
-		$this->configs[$name] = ['method' => $method, 'shortcut' => $shortcut];
+		if ($mode === null)
+		{
+			$mode = InputOption::VALUE_NONE;
+		}
+		$this->configs[$name] = ['method' => $method, 'shortcut' => $shortcut, 'mode' => $mode];
+	}
+	
+	protected function addValueOption(string $name, string $shortcut = null)
+	{
+		$this->addConfig($name, $shortcut, null, InputOption::VALUE_OPTIONAL);
+	}
+	
+	protected function addMethodArgument(string $name, int $mode = null, string $method = null)
+	{
+		$this->methodArguments[$name] = ['method' => $method, 'mode' => $mode];
 	}
 	
 	protected function configure(): void
@@ -32,7 +50,11 @@ abstract class SmurfCommand extends Command
 		$c = $this;
 		foreach ($this->configs as $name => $config)
 		{
-			$c = $c->addOption($name, $config['shortcut'], InputOption::VALUE_NONE);
+			$c = $c->addOption($name, $config['shortcut'], $config['mode']);
+		}
+		foreach ($this->methodArguments as $name => $config)
+		{
+			$c = $c->addArgument($name, $config['mode']);
 		}
 	}
 	

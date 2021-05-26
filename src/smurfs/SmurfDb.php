@@ -32,6 +32,7 @@ class SmurfDb extends SmurfCommand
 		$this->addConfig('views', 'w', 'runViews');
 		$this->addConfig('models', 'm', 'runModels');
 		parent::__construct('db');
+		$this->Options = new Options();
 	}
 	
 	/**
@@ -126,11 +127,6 @@ class SmurfDb extends SmurfCommand
 				return false;
 			}
 		}
-	}
-	
-	protected function runCommand()
-	{
-		$this->Options = new Options();
 	}
 	
 	public function runModels()
