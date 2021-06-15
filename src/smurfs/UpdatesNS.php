@@ -66,7 +66,7 @@ class UpdatesNS extends SmurfCommand
 			$queries  = [];
 			if ($this->input->getOption('reset') or $this->input->getOption('flush'))
 			{
-				Db::TSqlUpdates()->truncate();
+				Db::TSqlUpdates()->namespace($update['ns'])->delete();
 				if ($this->input->getOption('flush'))
 				{
 					return;
