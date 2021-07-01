@@ -96,3 +96,41 @@ jQuery.fn.delError = function ()
 	this.data("formError-ajax", false);
 	return this;
 };
+
+var getBodyActualWidth = function ()
+{
+	jQuery("body").css("overflow", "hidden");
+	var ww = $(window).width();
+	jQuery("body").css("overflow", "");
+	return ww;
+};
+
+var ObjectProps = function (items)
+{
+	this.items = items;
+};
+jQuery.extend(ObjectProps.prototype, {
+	
+	exists: function (name)
+	{
+		if (typeof this.items[name] == "undefined")
+		{
+			return false;
+		}
+		return true;
+	},
+	
+	set: function (name, val)
+	{
+		this.items[name] = val;
+	},
+	
+	get: function (name, onNotFound)
+	{
+		if (!this.exists(name))
+		{
+			return onNotFound;
+		}
+		return this.items[name];
+	}
+});

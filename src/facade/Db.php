@@ -11,6 +11,7 @@ namespace Infira\Fookie\facade;
  * @method static void multiQuery(string $query, callable|bool $callback)
  * @method static mixed escape($data, bool $checkArray = false)()
  * @method static void fileQuery(string $fileLocation, array $vars = [])
+ * @method static void complexQuery(string $query, array $vars = [])
  * @method static int getLastInsertID()
  * @method static object getLastQueryInfo()
  * @method static void debugLastQuery()

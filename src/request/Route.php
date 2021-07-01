@@ -267,11 +267,11 @@ class Route
 				$db->ID(Http::getGET('_rrid'));
 				$req                       = $db->select('UNCOMPRESS(post) as post,UNCOMPRESS(headers) as headers,methodArguments,method')->getObject();
 				$controllerMethodArguments = json_decode($req->methodArguments);
-				$headers                   = (array)json_decode($req->headers);
-				$post                      = (array)json_decode($req->post);
+				$req->headers              = (array)json_decode($req->headers);
+				$req->post                 = (array)json_decode($req->post);
 				addExtraErrorInfo('saved$req', $req);
 				addExtraErrorInfo('$controllerMethodArguments', $controllerMethodArguments);
-				Http::flushPOST($post);
+				Http::flushPOST($req->post);
 				$_SERVER['REQUEST_METHOD'] = $req->method;
 			}
 			else

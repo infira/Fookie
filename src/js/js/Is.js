@@ -4,7 +4,7 @@
  */
 var Is = new function ()
 {
-
+	
 	/**
 	 * Is value typeof object
 	 * @param {Object} v
@@ -133,12 +133,12 @@ var Is = new function ()
 			}
 			return false;
 		}
-		if ($.isArray(what))
+		if (this.array(what))
 		{
 			var ok = false;
 			if (op == "and")
 			{
-				$.each(what, function (i, v)
+				what.each(function (v)
 				{
 					if (!_isBetween(v, from, to))
 					{
@@ -149,7 +149,7 @@ var Is = new function ()
 			}
 			else
 			{
-				$.each(what, function (i, v)
+				what.each(function (v)
 				{
 					if (_isBetween(v, from, to))
 					{

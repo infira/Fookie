@@ -114,7 +114,9 @@ class SmurfDb extends SmurfCommand
 			{
 				if (!in_array($file, $this->dbFiles[$to]))
 				{
-					if (strtolower(\Infira\Utils\File::getExtension($file)) == 'sql')
+					$ex  = explode('.', $file);
+					$ext = strtolower(join('.', array_slice($ex, 1)));
+					if (in_array($ext, ['sql.php', 'sql', 'trigger.sql']))
 					{
 						$this->dbFiles[$to][] = $file;
 					}
@@ -123,8 +125,6 @@ class SmurfDb extends SmurfCommand
 			else
 			{
 				$this->error('File is not file or path(' . $file . ') not found');
-				
-				return false;
 			}
 		}
 	}
@@ -155,7 +155,25 @@ class SmurfDb extends SmurfCommand
 			{
 				try
 				{
-					Db::fileQuery($fn);
+					if (strtolower(\Infira\Utils\File::getExtension($fn)) == 'php')
+					{
+						require_once $fn;
+						$func = str_replace(['.sql', '.php'], '', File::getFileNameWithoutExtension($fn));
+						if (!function_exists($func))
+						{
+							$this->error('View php file must contain function ' . $func);
+						}
+						$q = $func();
+						if (gettype($q) != 'string')
+						{
+							$this->error("View function $func must return string");
+						}
+						Db::complexQuery($q);
+					}
+					else
+					{
+						Db::fileQuery($fn);
+					}
 				}
 				catch (\Exception $e)
 				{

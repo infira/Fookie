@@ -1,129 +1,16 @@
 //depend:js/Is
-var __applyToAll           = function (name, method)
+function debug()
 {
-	__applyTo("Array,Function", method);
-	__applyToNonArraObject(name, method);
-}
-var __applyToNonArraObject = function (name, method)
-{
-	__applyTo("String,Number,Date,RegExp,Boolean", name, method);
+	if (typeof console == "object" && console && console.log)
+	{
+		console.log.apply(console, arguments);
+	}
 }
 
-var __applyTo = function (toName, name, method, voidWhenAlreadyDefined)
+function stackTrace()
 {
-	if (toName.match(/,/i))
-	{
-		var ex = toName.split(/,/i);
-		for (i = 0; i < ex.length; i++)
-		{
-			__apply(ex[i], name, method, voidWhenAlreadyDefined);
-		}
-	}
-	else
-	{
-		__apply(toName, name, method, voidWhenAlreadyDefined);
-	}
-}
-var __apply   = function (toName, name, method, voidWhenAlreadyDefined)
-{
-	if (toName == "Array")
-	{
-		if (typeof Array.prototype[name] == "undefined")
-		{
-			Array.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("Array.prototype." + name + " is already defined");
-			}
-		}
-	}
-	else if (toName == "String")
-	{
-		if (typeof String.prototype[name] == "undefined")
-		{
-			String.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("String.prototype." + name + " is already defined");
-			}
-		}
-	}
-	else if (toName == "Number")
-	{
-		if (typeof Number.prototype[name] == "undefined")
-		{
-			Number.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("Number.prototype." + name + " is already defined");
-			}
-		}
-	}
-	else if (toName == "Date")
-	{
-		if (typeof Date.prototype[name] == "undefined")
-		{
-			Date.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("Date.prototype." + name + " is already defined");
-			}
-		}
-	}
-	else if (toName == "Function")
-	{
-		if (typeof Function.prototype[name] == "undefined")
-		{
-			Function.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("Function.prototype." + name + " is already defined");
-			}
-		}
-	}
-	else if (toName == "RegExp")
-	{
-		if (typeof RegExp.prototype[name] == "undefined")
-		{
-			RegExp.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("RegExp.prototype." + name + " is already defined");
-			}
-		}
-	}
-	else if (toName == "Boolean")
-	{
-		if (typeof Boolean.prototype[name] == "undefined")
-		{
-			Boolean.prototype[name] = method;
-		}
-		else
-		{
-			if (!voidWhenAlreadyDefined)
-			{
-				console.error("Boolean.prototype." + name + " is already defined");
-			}
-		}
-	}
+	let err = new Error();
+	return err.stack;
 }
 
 function __isNumeric(value)
@@ -136,12 +23,12 @@ function __isNumeric(value)
 	{
 		return false;
 	}
-	if (value == "")
+	if (value === "")
 	{
 		return false;
 	}
 	value = value.toString().replace(/,/g, ".");
-	if (isNaN(value) == true)
+	if (isNaN(value))
 	{
 		return false;
 	}
@@ -151,104 +38,170 @@ function __isNumeric(value)
 	}
 }
 
-__applyTo("String,Number,Date", "matchAll", function (reg)
+let __checkProtoMethod         = function (protoName, method)
 {
-	var value   = this.valueOf().toString();
-	var match;
-	var matches = [];
-	var c       = 0;
-	var res;
-	while (res != false)
+	if (Object.prototype.toString.call(protoName) === '[object Array]')
 	{
-		match = reg.exec(value);
-		res   = false;
-		if (match)
+		protoName.forEach(function (pn)
 		{
-			value = value.substring(match.index + match[0].length);
-			res   = match[0];
-		}
-		if (res != false)
-		{
-			matches.push(res);
-		}
-		else
-		{
-			res = false;
-		}
+			__checkProtoMethod(pn, method);
+		});
 	}
-	return matches;
-}, true);
-
-function stripHTML(html)
+	else if (protoName.indexOf(',') >= 0)
+	{
+		protoName.split(',').forEach(function (pn)
+		{
+			__checkProtoMethod(pn, method);
+		});
+	}
+	else if (protoName === "Array" && typeof Array.prototype[method] != "undefined")
+	{
+		console.error("Array.prototype." + method + " is already defined");
+	}
+	else if (protoName === "String" && typeof String.prototype[method] != "undefined")
+	{
+		console.error("String.prototype." + method + " is already defined");
+	}
+	else if (protoName === "Number" && typeof Number.prototype[method] != "undefined")
+	{
+		console.error("Number.prototype." + method + " is already defined");
+	}
+	else if (protoName === "Date" && typeof Date.prototype[method] != "undefined")
+	{
+		console.error("Date.prototype." + method + " is already defined");
+	}
+	else if (protoName === "Function" && typeof Function.prototype[method] != "undefined")
+	{
+		console.error("Function.prototype." + method + " is already defined");
+	}
+	else if (protoName === "RegExp" && typeof RegExp.prototype[method] != "undefined")
+	{
+		console.error("RegExp.prototype." + method + " is already defined");
+	}
+	else if (protoName === "Boolean" && typeof Boolean.prototype[method] != "undefined")
+	{
+		console.error("Boolean.prototype." + method + " is already defined");
+	}
+}
+let __checkNonArrayProtoMethod = function (method)
 {
-	var tmp       = document.createElement("DIV");
-	tmp.innerHTML = html;
-	return tmp.textContent || tmp.innerText || "";
+	__checkProtoMethod('String,Number,Date,RegExp,Boolean', method);
 }
 
-__applyTo("String,Number", "strip", function ()
+__checkProtoMethod('String,Number', 'stripHTML');
+String.prototype.stripHTML = function ()
 {
-	var val = this.valueOf();
-	return stripHTML(val);
-});
-__applyTo("String,Number", "getMatch", function (regex, returnOnFalse)
+	//return this.replace(/(<([^>]+)>)/ig, "");
+	let tmp       = document.createElement("DIV");
+	tmp.innerHTML = this.valueOf();
+	return tmp.textContent || tmp.innerText || "";
+};
+
+__checkProtoMethod('String,Number', 'isMatch');
+String.prototype.isMatch = Number.prototype.isMatch = function (regex)
 {
-	var val = this.valueOf().match(regex);
-	if (val !== null)
-	{
-		return val[0];
-	}
-	return returnOnFalse;
-});
-__applyTo("String,Number", "isMatch", function (regex)
-{
-	var val = this.valueOf().match(regex);
-	if (val !== null)
-	{
-		return true;
-	}
-	return false;
-});
-__applyTo("String,Number", "reverse", function (regex)
+	let val = this.valueOf().toString().match(regex);
+	return val !== null;
+	
+};
+
+__checkProtoMethod('String,Number', 'reverse');
+String.prototype.reverse = Number.prototype.reverse = function ()
 {
 	return [].reduceRight.call(this, function (last, secLast) {return last + secLast});
-});
+};
 
-__applyTo("String,Number", "deparam", function (vars)
+__checkProtoMethod('String,Number', 'deparam');
+String.prototype.deparam = Number.prototype.deparam = function ()
 {
-	var querystring = this.valueOf();
+	let querystring = this.valueOf();
 	// remove any preceding url and split
 	querystring     = querystring.substring(querystring.indexOf('?') + 1).split('&');
-	var params      = {},
+	let params      = {},
 	    pair,
 	    d           = decodeURIComponent;
 	// march and parse
-	for (var i = querystring.length - 1; i >= 0; i--)
+	for (let i = querystring.length - 1; i >= 0; i--)
 	{
 		pair               = querystring[i].split('=');
 		params[d(pair[0])] = d(pair[1]);
 	}
 	return params;
-});
+};
+
+__checkProtoMethod('String,Number', 'inArray');
+String.prototype.inArray = Number.prototype.inArray = function (array)
+{
+	if (Object.prototype.toString.call(array) !== '[object Array]')
+	{
+		console.warn('Fookie says: value is not proper array, converting to array');
+		array = [array];
+	}
+	return array.inArray(this.valueOf());
+};
+
+__checkProtoMethod('String,Number', 'math');
+String.prototype.math = Number.prototype.math = function (string)
+{
+	let origValue = this.valueOf().toNumber();
+	string        = string.toString().replace(" ", "");
+	let $op       = string.substring(0, 1);
+	let mathValue = __toNumber(string.substring(1));
+	let newValue  = mathValue;
+	if ($op === "+")
+	{
+		newValue = origValue + mathValue;
+	}
+	else if ($op === "*")
+	{
+		newValue = origValue * mathValue;
+	}
+	else if ($op === "-")
+	{
+		newValue = origValue - mathValue;
+	}
+	else if ($op === "%")
+	{
+		newValue = (origValue * mathValue) / 100;
+	}
+	else if ($op === "/" || $op === ":")
+	{
+		newValue = origValue / mathValue;
+	}
+	return newValue;
+};
+
 if (!String.prototype.trim)
 {
 	String.prototype.trim = function ()
 	{
-		return this.replace(/^\s+|\s+$/g, '');
+		let whitespace = "[\\x20\\t\\r\\n\\f]";
+		let rtrim      = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
+		return this.replace(rtrim, "");
 	};
 }
+if (!Number.prototype.trim)
+{
+	Number.prototype.trim = function ()
+	{
+		return this.toString().trim();
+	}
+}
 
-Number.prototype.formatNumber = function (decPlaces, thouSeparator, decSeparator)
+__checkProtoMethod('Number', 'format');
+Number.prototype.format = function (decPlaces, thouSeparator, decSeparator)
 {
 	decPlaces     = isNaN(decPlaces = Math.abs(decPlaces)) ? 2 : decPlaces;
-	decSeparator  = decSeparator == undefined ? "." : decSeparator;
-	thouSeparator = thouSeparator == undefined ? "," : thouSeparator;
+	decSeparator  = decSeparator || ".";
+	thouSeparator = thouSeparator || ",";
 	
-	var n = this.toFixed(decPlaces);
+	let n = this.toFixed(decPlaces);
+	let i;
+	let j;
 	if (decPlaces)
 	{
-		var i = n.substr(0, n.length - (decPlaces + 1));
-		var j = decSeparator + n.substr(-decPlaces);
+		i = n.substr(0, n.length - (decPlaces + 1));
+		j = decSeparator + n.substr(-decPlaces);
 	}
 	else
 	{
@@ -258,8 +211,8 @@ Number.prototype.formatNumber = function (decPlaces, thouSeparator, decSeparator
 	
 	function reverse(str)
 	{
-		var sr = '';
-		for (var l = str.length - 1; l >= 0; l--)
+		let sr = '';
+		for (let l = str.length - 1; l >= 0; l--)
 		{
 			sr += str.charAt(l);
 		}
@@ -272,31 +225,40 @@ Number.prototype.formatNumber = function (decPlaces, thouSeparator, decSeparator
 	}
 	return i + j;
 };
-String.prototype.toCamelCase  = function ()
+
+__checkProtoMethod('String', 'toCamelCase');
+String.prototype.toCamelCase = function ()
 {
-	return this.replace(/-([a-z])/g, function ($0, $1)
+	return this.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index)
 	{
-		return $1.toUpperCase();
-	}).replace('-', '');
-};
-String.prototype.replaceAll   = function (str1, str2, ignore)
-{
-	return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (str2) == "string") ? str2.replace(/\$/g, "$$$$") : str2);
+		return index === 0 ? word.toLowerCase() : word.toUpperCase();
+	}).replace(/\s+/g, '');
 }
 
-__applyToNonArraObject("toFloat", function ()
+if (!String.prototype.replaceAll)
+{
+	String.prototype.replaceAll = function (str1, str2, ignore)
+	{
+		return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (str2) == "string") ? str2.replace(/\$/g, "$$$$") : str2);
+	}
+}
+
+__checkNonArrayProtoMethod('toFloat');
+String.prototype.toFloat = Number.prototype.toFloat = Date.prototype.toFloat = RegExp.prototype.toFloat = Boolean.prototype.toFloat = function ()
 {
 	return parseFloat(this.valueOf());
-});
+};
 
-__applyToNonArraObject("toInt", function ()
+__checkNonArrayProtoMethod('toInt');
+String.prototype.toInt = Number.prototype.toInt = Date.prototype.toInt = RegExp.prototype.toInt = Boolean.prototype.toInt = function ()
 {
 	return parseInt(this.valueOf());
-});
+};
 
-__applyToNonArraObject("toBool", function ()
+__checkNonArrayProtoMethod('toBool');
+String.prototype.toBool = Number.prototype.toBool = Date.prototype.toBool = RegExp.prototype.toBool = function ()
 {
-	var v = this.valueOf();
+	let v = this.valueOf();
 	if (v === "true" || v === true || v === "1" || v === 1)
 	{
 		return true;
@@ -314,21 +276,13 @@ __applyToNonArraObject("toBool", function ()
 		return true;
 	}
 	return false;
-});
-__applyTo("String", "jq", function ()
-{
-	return jQuery(this.valueOf());
-});
+};
 
 function __toNumber(v)
 {
-	if (typeof v == "undefined")
+	if (v === undefined)
 	{
-		v = this.valueOf();
-	}
-	if (v == undefined)
-	{
-		return false;
+		return null;
 	}
 	v = v.toString().replace(/,/g, ".");
 	if (__isNumeric(v))
@@ -343,123 +297,44 @@ function __toNumber(v)
 		}
 	}
 	return 0;
-};
-__applyToNonArraObject("toNumber", __toNumber);
-__applyToNonArraObject("toNegative", function ()
+}
+
+__checkNonArrayProtoMethod('toNumber');
+__checkNonArrayProtoMethod('toNegative');
+String.prototype.toNumber   = Number.prototype.toNumber = Date.prototype.toNumber = RegExp.prototype.toNumber = Boolean.prototype.toNumber = function ()
 {
-	var v = __toNumber(this.valueOf());
+	return __toNumber(this.valueOf());
+};
+String.prototype.toNegative = Number.prototype.toNegative = Date.prototype.toNegative = RegExp.prototype.toNegative = Boolean.prototype.toNegative = function ()
+{
+	let v = __toNumber(this.valueOf());
 	if (v <= 0)
 	{
 		return v;
 	}
 	return v * -1;
-});
-__applyToNonArraObject("toPositive", function ()
+};
+
+__checkNonArrayProtoMethod('toPositive');
+String.prototype.toPositive = Number.prototype.toPositive = Date.prototype.toPositive = RegExp.prototype.toPositive = Boolean.prototype.toPositive = function ()
 {
-	var v = __toNumber(this.valueOf());
+	let v = __toNumber(this.valueOf());
 	if (v <= 0)
 	{
 		v = v * (-1);
 	}
 	return v;
-});
-/**
- * Useful javascript extensions
- * @author gen Taliaru
- */
-__applyTo("String,Number", "math", function (string)
-{
-	var origValue = this.valueOf().toNumber();
-	string        = string.toString().replace(" ", "");
-	$op           = string.substring(0, 1);
-	mathValue     = __toNumber(string.substring(1));
-	newValue      = mathValue;
-	if ($op == "+")
-	{
-		newValue = origValue + mathValue;
-	}
-	else if ($op == "*")
-	{
-		newValue = origValue * mathValue;
-	}
-	else if ($op == "-")
-	{
-		newValue = origValue - mathValue;
-	}
-	else if ($op == "%")
-	{
-		newValue = (origValue * mathValue) / 100;
-	}
-	else if ($op == "/" || $op == ":")
-	{
-		newValue = origValue / mathValue;
-	}
-	return newValue;
-});
-
-var ObjectProps = function (items)
-{
-	this.items = items;
-};
-jQuery.extend(ObjectProps.prototype, {
-	
-	exists: function (name)
-	{
-		if (typeof this.items[name] == "undefined")
-		{
-			return false;
-		}
-		return true;
-	},
-	
-	set: function (name, val)
-	{
-		this.items[name] = val;
-	},
-	
-	get: function (name, onNotFound)
-	{
-		if (!this.exists(name))
-		{
-			return onNotFound;
-		}
-		return this.items[name];
-	}
-});
-
-/**
- * This functions is to debug variables.
- * NB! Only works with browsers that have a console, usualy firefox with firebug
- * @param {Mixed} value
- */
-function debug()
-{
-	if (typeof console == "object" && console && console.log)
-	{
-		console.log.apply(console, arguments);
-	}
 };
 
-function stackTrace()
+__checkNonArrayProtoMethod('toArray');
+String.prototype.toArray = Number.prototype.toArray = Date.prototype.toArray = RegExp.prototype.toArray = Boolean.prototype.toArray = function ()
 {
-	var err = new Error();
-	return err.stack;
-}
-
-var getBodyActualWidth = function ()
-{
-	jQuery("body").css("overflow", "hidden");
-	var ww = $(window).width();
-	jQuery("body").css("overflow", "");
-	return ww;
+	let v = this.valueOf();
+	if (Object.prototype.toString.call(v) === '[object Array]')
+	{
+		return v;
+	}
+	return v.toString().trim().split(/,/g);
 };
 
-__applyToAll("debug", function ()
-{
-	debug(this.valueOf());
-});
 
-__applyTo("String,Number", "stripHTML", function ()
-{
-	return this.replace(/(<([^>]+)>)/ig, "");
-});

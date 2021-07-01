@@ -1,4 +1,13 @@
-__applyTo("Array", "chunk", function (chunkSize)
+if (typeof Array.isArray === "undefined")
+{
+	Array.prototype.isArray = function (v)
+	{
+		return Object.prototype.toString.call(v) === '[object Array]';
+	}
+}
+
+__checkProtoMethod('Array', 'chunk');
+Array.prototype.chunk = function (chunkSize)
 {
 	var R = [];
 	for (var i = 0, len = this.length; i < len; i += chunkSize)
@@ -6,17 +15,14 @@ __applyTo("Array", "chunk", function (chunkSize)
 		R.push(this.slice(i, i + chunkSize));
 	}
 	return R;
-});
-__applyTo("Array", "each", Array.prototype.forEach);
+};
+__checkProtoMethod('Array', 'each');
+Array.prototype.each = Array.prototype.forEach;
 
-__applyTo("String,Number", "inArray", function (array)
+__checkProtoMethod('Array', 'inArray');
+Array.prototype.inArray = function (needle)
 {
-	return array.inArray(this.valueOf());
-});
-
-__applyTo("Array", "inArray", function (needle)
-{
-	var needleArr = [];
+	let needleArr = [];
 	if (Object.prototype.toString.call(needle) === '[object Array]')
 	{
 		needleArr = needle;
@@ -36,28 +42,64 @@ __applyTo("Array", "inArray", function (needle)
 		}
 	}
 	return false;
-});
-__applyTo("Array", "prepend", function (value)
+};
+__checkProtoMethod('Array', 'prepend');
+Array.prototype.prepend = function (value)
 {
 	var newArray = this.slice();
 	newArray.unshift(value);
 	return newArray;
-});
+};
 
-__applyTo("Array", "remove", function (from, to)
+__checkProtoMethod('Array', 'removeValue');
+Array.prototype.removeValue = function (removeable, removeAllOccurence)
+{
+	let arr            = this;
+	removeAllOccurence = typeof removeAllOccurence == 'undefined' ? false : removeAllOccurence;
+	let i;
+	if (removeAllOccurence)
+	{
+		i = 0;
+		while (i < arr.length)
+		{
+			if (arr[i] === removeable)
+			{
+				arr.splice(i, 1);
+			}
+			else
+			{
+				++i;
+			}
+		}
+	}
+	else
+	{
+		i = arr.indexOf(removeable);
+		if (i > -1)
+		{
+			arr.splice(i, 1);
+		}
+	}
+	return arr;
+};
+
+__checkProtoMethod('Array', 'remove');
+Array.prototype.remove = function (from, to)
 {
 	var rest    = this.slice((to || from) + 1 || this.length);
 	this.length = from < 0 ? this.length + from : from;
 	return this.push.apply(this, rest);
-});
+};
 
-__applyTo("Array", "last", function (from, to)
+__checkProtoMethod('Array', 'last');
+Array.prototype.last = function ()
 {
 	var arr = this;
 	return arr[arr.length - 1];
-});
+};
 
-__applyTo("Array", "filterKey", function (key, values)
+__checkProtoMethod('Array', 'filterKey');
+Array.prototype.filterKey = function (key, values)
 {
 	var filterArr;
 	if (typeof key != "undefined" && typeof values != "undefined")
@@ -79,7 +121,7 @@ __applyTo("Array", "filterKey", function (key, values)
 		{
 			key    = filter[0];
 			values = filter[1];
-			if (!$.isArray(values))
+			if (!Array.isArray(values))
 			{
 				values = [values];
 			}
@@ -94,9 +136,10 @@ __applyTo("Array", "filterKey", function (key, values)
 		}
 	});
 	return newArray;
-});
+};
 
-__applyTo("Array", "keySort", function (key, asc, asNumber)
+__checkProtoMethod('Array', 'keySort');
+Array.prototype.keySort = function (key, asc, asNumber)
 {
 	var __keysrt = function (key, asc)
 	{
@@ -113,9 +156,10 @@ __applyTo("Array", "keySort", function (key, asc, asNumber)
 		}
 	}
 	return this.sort(__keysrt(key, asc));
-});
+};
 
-__applyTo("Array", "toObject", function (objectKeyFields)
+__checkProtoMethod('Array', 'toObject');
+Array.prototype.toObject = function (objectKeyFields)
 {
 	var obj = {};
 	this.each(function (Item)
@@ -129,12 +173,13 @@ __applyTo("Array", "toObject", function (objectKeyFields)
 		obj[objKeyName] = Item;
 	});
 	return obj;
-});
+};
 
-__applyTo("Array", "distinct", function ()
+__checkProtoMethod('Array', 'distinct');
+Array.prototype.distinct = function ()
 {
 	return this.filter(function (value, index, self)
 	{
 		return self.indexOf(value) === index;
 	});
-});
+};
