@@ -1,9 +1,11 @@
 <?php
 
-trait PoesisDataMethodsExtendor
+namespace Infira\Fookie\Poesis;
+
+use Infira\Poesis\dr\DataMethods;
+
+class FDataMethods extends DataMethods
 {
-	use AppPoesisDataMethods;
-	
 	/**
 	 * Get options for html <select tag
 	 *
@@ -15,7 +17,7 @@ trait PoesisDataMethodsExtendor
 	 * @param array  $extraFields - to add extra fields to array
 	 * @return array
 	 */
-	public function options($key = 'ID', $v = 'name', $firstNull = true, $isExtOptions = false, $extraFields = [], $fetchRow = false)
+	public function options($key = 'ID', $v = 'name', $firstNull = true, $isExtOptions = false, $extraFields = [], $fetchRow = false): array
 	{
 		$newArray = [];
 		if ($firstNull !== true and !checkArray($firstNull) and !is_object($firstNull) and $firstNull !== false)
@@ -84,7 +86,7 @@ trait PoesisDataMethodsExtendor
 		return $newArray;
 	}
 	
-	public function getExtOptions($key = 'ID', $v = 'name', $firstNull = true, $extraFields = [])
+	public function getExtOptions($key = 'ID', $v = 'name', $firstNull = true, $extraFields = []): array
 	{
 		return $this->options($key, $v, $firstNull, true, $extraFields);
 	}
@@ -97,7 +99,7 @@ trait PoesisDataMethodsExtendor
 	 * @param string $arrayListClassName
 	 * @return \Infira\Farray\FarrayList
 	 */
-	public function getFarrayList($IDField = "ID", $arrayListClassName = "\Infira\Farray\FarrayList")
+	public function getFarrayList($IDField = "ID", $arrayListClassName = "\Infira\Farray\FarrayList"): \Infira\Farray\FarrayList
 	{
 		$List = new $arrayListClassName($this->getRes()->fetch_all(MYSQLI_ASSOC));
 		$List->setIDField($IDField);
@@ -111,22 +113,22 @@ trait PoesisDataMethodsExtendor
 	}
 	
 	/**
-	 * Get data as ArrayListNode
+	 * Get data as FarrayNode
 	 * old = getArrayListNode
 	 *
 	 * @return \Infira\Farray\FarrayNode
 	 */
-	public function getFarrayNode()
+	public function getFarrayNode(): \Infira\Farray\FarrayNode
 	{
 		return $this->getRowAsClass("\Infira\Farray\FarrayNode");
 	}
 	
 	/**
-	 * Get data as ArraylList, each row will be stdClass
+	 * Get data as \Infira\Farray\Callback, each row will be stdClass
 	 *
 	 * @return \Infira\Farray\Callback
 	 */
-	public function getFarrayCallback()
+	public function getFarrayCallback(): \Infira\Farray\Callback
 	{
 		$List = $this->getAllAsClass("\Infira\Farray\Callback");
 		if ($this->rowParserCallback)
@@ -142,7 +144,7 @@ trait PoesisDataMethodsExtendor
 	 *
 	 * @return \Infira\Farray\FarrayObject
 	 */
-	public function getFarrayObject()
+	public function getFarrayObject(): \Infira\Farray\FarrayObject
 	{
 		return $this->getRowAsClass("\Infira\Farray\FarrayObject");
 	}

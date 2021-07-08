@@ -131,9 +131,12 @@ class SmurfDb extends SmurfCommand
 	
 	public function runModels()
 	{
+		$this->Options->setDefaultModelDataMethodsExtendor('\Infira\Fookie\Poesis\FDataMethods');
 		$this->beforeExecute_Models();
 		$this->dbConnection = $this->dbConnection ? $this->dbConnection : ConnectionManager::default();
-		$gen                = new Generator($this->dbConnection, $this->Options);
+		
+		
+		$gen = new Generator($this->dbConnection, $this->Options);
 		foreach ($gen->generate($this->installPath) as $file)
 		{
 			$this->message('<info>generated model: </info>' . $file);

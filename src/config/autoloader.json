@@ -1,10 +1,6 @@
 {
   "classMap": {
-	"PoesisDataMethodsExtendor"   : "traits/PoesisDataMethodsExtendor.trait.php",
 	"PoesisConnectionExtendor"    : "traits/PoesisConnectionExtendor.trait.php",
-	"PoesisModelColumnExtendor"   : "traits/PoesisModelColumnExtendor.trait.php",
-	"AppPoesisModelColumnExtendor": "traits/AppPoesisModelColumnExtendor.trait.php",
-	"AppPoesisDataMethods"        : "traits/AppPoesisDataMethods.trait.php",
 	"AppPoesisConnectionExtendor" : "traits/AppPoesisConnectionExtendor.trait.php"
 
   }
