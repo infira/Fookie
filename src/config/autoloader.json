@@ -1,7 +1,3 @@
 {
-  "classMap": {
-	"PoesisConnectionExtendor"    : "traits/PoesisConnectionExtendor.trait.php",
-	"AppPoesisConnectionExtendor" : "traits/AppPoesisConnectionExtendor.trait.php"
-
-  }
+  "classMap": {}
 }

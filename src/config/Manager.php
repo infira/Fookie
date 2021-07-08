@@ -36,6 +36,7 @@ abstract class Manager
 			ConfigEntries::addDefaultValue("__configIsIntialized", true);
 			ConfigEntries::addDefaultValue("voidDbTableClassInstall", []);
 			ConfigEntries::addDefaultValue("logModel", '\TLog');
+			ConfigEntries::addDefaultValue("poesisQueryHistoryEnabled", false);
 			self::routeCurrent('web');
 			self::routeDefaultRole('web');
 			self::routeRoles(['web']);
@@ -206,6 +207,17 @@ abstract class Manager
 	public final static function voidDbTableClassInstall(array $array = null): array
 	{
 		return (array)self::setGetVar("voidDbTableClassInstall", $array);
+	}
+	
+	/**
+	 * Store poesis Query History Enabled
+	 *
+	 * @param bool $bool
+	 * @return bool
+	 */
+	public final static function poesisQueryHistoryEnabled(bool $bool = null): bool
+	{
+		return (bool)self::setGetVar("poesisQueryHistoryEnabled", $bool);
 	}
 	
 	/**

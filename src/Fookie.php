@@ -11,6 +11,7 @@ use Infira\Fookie\facade\Cache;
 use Infira\Poesis\ConnectionManager;
 use Infira\Cachly\options\DbDriverOptions;
 use AppConfig;
+use Infira\Poesis\Poesis;
 
 class Fookie
 {
@@ -55,9 +56,7 @@ class Fookie
 	
 	public static function initDb()
 	{
-		$dbOptons         = new DbDriverOptions();
-		$dbOptons->client = ConnectionManager::default()->getMysqli();
-		Cache::configureDb($dbOptons);
+		Poesis::toggleQueryHistory(AppConfig::poesisQueryHistoryEnabled());
 	}
 	
 	/**
@@ -87,6 +86,9 @@ class Fookie
 	
 	public static function initCache()
 	{
+		$dbOptons         = new DbDriverOptions();
+		$dbOptons->client = ConnectionManager::default()->getMysqli();
+		Cache::configureDb($dbOptons);
 		Cache::init();
 		Cache::setDefaultDriver(AppConfig::defaultCacheDriver());
 		Cache::setCacheKeyPrefix(AppConfig::getENV());
