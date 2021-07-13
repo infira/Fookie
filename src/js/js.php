@@ -34,7 +34,7 @@ function getFileContent($pathName, $fName)
 		$len = strlen($str) - 1;
 		if ($len > 0)
 		{
-			if ($str{$len} != ";")
+			if ($str[$len] != ";")
 			{
 				$str .= ";";
 			}

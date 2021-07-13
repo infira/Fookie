@@ -5,6 +5,11 @@ namespace Infira\Fookie\controller;
 use Infira\Utils\Http;
 use AppConfig;
 use Db;
+use Infira\Poesis\Poesis;
+use Infira\Fookie\request\Route;
+use Infira\Fookie\Log;
+use Infira\Fookie\facade\Variable;
+use Infira\Utils\Date;
 
 class Operation extends Controller
 {
@@ -20,78 +25,64 @@ class Operation extends Controller
 	
 	public function viewLog()
 	{
-		if (Http::getGET("hash") == "1a74df14" && Http::existsGET("ID"))
+		if (Http::getGET("hash") == '1a74df14' and Http::existsGET('ID'))
 		{
-			$Db       = Db::TLog();
-			$logRowID = Http::getGET("ID");
-			if ($logRowID == "last")
-			{
-				$Db->orderBy("ID DESC");
-				$Db->limit(1);
-			}
-			else
-			{
-				$Db->ID($logRowID);
-			}
-			$Obj = $Db->select()->getObject();
-			if (is_object($Obj))
-			{
-				if ($Obj->isSerialized == 1)
-				{
-					debug(unserialize($Obj->content));
-				}
-				else
-				{
-					debug($Obj->content);
-				}
-			}
+			return Log::getContent(Http::getGET('ID'));
 		}
+		exit;
 	}
 	
 	public function viewDbLog()
 	{
-		ini_set('memory_limit', '1G');
 		if (Http::getGET("hash") == "1a74df14")
 		{
-			$Db  = DbLog::Db();
-			$dir = (in_array(Variable::toLower(Http::getGET("dir")), ["asc", "desc"])) ? Http::getGET("dir") : "asc";
-			$Db->orderBy("ID $dir");
-			$whereFields = ["ID", "tableName", "tableRowID", "eventName", "userID", "url"];
-			foreach ($whereFields as $field)
+			$dataModelName = Poesis::getLogDataModel();
+			/**
+			 * @var $dbData \TDbLogData
+			 */
+			$dbData    = new $dataModelName();
+			$modelName = Poesis::getLogModel();
+			/**
+			 * @var $dbLog \TDbLog
+			 */
+			$dbLog = new $modelName();
+			
+			$ID     = Http::getGET("ID", null);
+			$dataID = Http::getGET("dataID", null);
+			if ($ID == 'last')
 			{
-				$whereFields[] = "$field-not";
-			}
-			foreach ($whereFields as $field)
-			{
-				if (Http::existsGET($field))
-				{
-					if (substr($field, -4) == "-not")
-					{
-						$getField = $field;
-						$field    = substr($field, 0, -4);
-						if ($field == "url")
-						{
-							$Db->$field->notLike(Http::getGET($getField), true);
-						}
-						else
-						{
-							$Db->$field->not(Http::getGET($getField));
-						}
-					}
-					else
-					{
-						if ($field == "url")
-						{
-							$Db->$field->like(Http::getGET($field), true);
-						}
-						else
-						{
-							$Db->$field(Http::getGET($field));
-						}
-					}
-				}
+				$dbLog->limit(1);
+				$dbLog->orderBy('ID DESC');
+				$dataID = $dbLog->select('dataID')->getValue('dataID');
 			}
 			
+			
+			$dir = (in_array(Variable::toLower(Http::getGET("dir", 'asc')), ["asc", "desc"])) ? Http::getGET("dir") : "asc";
+			$dbData->orderBy("ID $dir");
+			if ($dataID)
+			{
+				$dbData->ID($dataID);
+			}
+			if (Http::existsGET("tableName"))
+			{
+				$dbData->tableName(Http::getGET("tableName"));
+			}
+			if (Http::existsGET("tableRowID"))
+			{
+				$dbData->tableRowID(Http::getGET("tableRowID"));
+			}
+			if (Http::existsGET("eventName"))
+			{
+				$dbData->eventName(Http::getGET("eventName"));
+			}
+			if (Http::existsGET("userID"))
+			{
+				$dbData->userID(Http::getGET("userID"));
+			}
+			if (Http::existsGET("url"))
+			{
+				$dbData->url(Http::getGET("url"));
+			}
 			if (Http::existsGET("date"))
 			{
 				if (Http::existsGET("dateOp"))
@@ -99,149 +90,154 @@ class Operation extends Controller
 					switch (Http::getGET("dateOp"))
 					{
 						case ">":
-							$Db->insertDateTime->biggerEq(Http::getGET("date"));
+							$dbData->insertDateTime->biggerEq(Http::getGET("date"));
 						break;
 						case "<":
-							$Db->insertDateTime->smaller(Http::getGET("date"));
+							$dbData->insertDateTime->smaller(Http::getGET("date"));
 						break;
 					}
 				}
 				else
 				{
-					$Db->insertDateTime(Http::getGET("date"));
+					$dbData->insertDateTime(Http::getGET("date"));
 				}
 			}
 			elseif (Http::existsGET("dateFrom") and Http::existsGET("dateTo"))
 			{
-				$Db->insertDateTime->between(Http::getGET("dateFrom"), Http::getGET("dateTo"));
+				$dbData->insertDateTime->between(Http::getGET("dateFrom"), Http::getGET("dateTo"));
 			}
-			$pos     = (Http::existsGET("pos")) ? Http::getGET("pos") : 0;
-			$lastPos = (Http::existsGET("lastPos")) ? Http::getGET("pos") : 0;
-			$limit   = (Http::existsGET("limit")) ? Http::getGET("limit") : 50;
-			$Db->limit($limit);
-			$Db->dontNullFields();
-			$query = $Db->getSelectQuery("uncompress(db_log.data) AS _data, db_log.*");
-			debug($query);
-			$list     = $Db->select("uncompress(db_log.data) AS _data, db_log.*")->getObjects();
-			$parseRow = function ($row)
+			$limit = (Http::existsGET("limit")) ? Http::getGET("limit") : 50;
+			//$dbData->limit("$pos,1");
+			$dbData->limit($limit);
+			$dbData->dontNullFields();
+			$query = "ID,ts,uncompress(data) AS data,userID,eventName,tableName,rowIDCols,url,ip";
+			$dr    = $dbData->select($query);
+			debug(['logQuery' => [
+				'getParams' => Http::getGET(),
+				'query'     => $dr->getQuery(),
+			]]);
+			$list = $dr->eachCollect(function ($log)
 			{
-				if (!isset($row->isParsed))
+				$log->data     = json_decode($log->data);
+				$log->ts       = Date::toDateTime($log->ts);
+				$statements    = $log->data->statements;
+				$contitionsMet = true;
+				
+				if (Http::existsGET("setField"))
 				{
-					unset($row->data);
-					$row->data           = json_decode($row->_data);
-					$row->insertDateTime = Date::toDateTime($row->insertDateTime);
-					$row->isParsed       = true;
-					unset($row->_data);
+					$contitionsMet = false;
+					foreach ($statements as $statement)
+					{
+						$clause    = $statement->setClauses;
+						$fieldName = Http::getGET("setField");
+						if (Http::existsGET("setValue"))
+						{
+							if (isset($clause->$fieldName))
+							{
+								if ($clause->$fieldName == Http::getGET("setValue"))
+								{
+									$contitionsMet = true;
+									break;
+								}
+							}
+						}
+						else
+						{
+							if (isset($clause->$fieldName))
+							{
+								$contitionsMet = true;
+								break;
+							}
+						}
+					}
 				}
 				
-				return $row;
-			};
-			$getRow   = function ($pos, $row) use ($list, $parseRow)
+				if (Http::existsGET("whereField"))
+				{
+					$contitionsMet = false;
+					foreach ($statements as $statement)
+					{
+						$fieldName = Http::getGET("whereField");
+						foreach ($statement->whereClauses as $clause)
+						{
+							if (Http::existsGET("whereValue"))
+							{
+								if (isset($clause->$fieldName))
+								{
+									if ($clause->$fieldName == Http::getGET("whereValue"))
+									{
+										$contitionsMet = true;
+										break;
+									}
+								}
+							}
+							else
+							{
+								if (isset($clause->$fieldName))
+								{
+									$contitionsMet = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+				if (!$contitionsMet)
+				{
+					return Poesis::VOID;
+				}
+				
+				return $log;
+			});
+			
+			$show = function ($pos, $row) use (&$list)
 			{
-				$get = Http::getGET();
-				if (isset($_GET["opName"]))
-				{
-					unset($get["opName"]);
-				}
-				if (isset($_GET["route"]))
-				{
-					unset($get["route"]);
-				}
+				$get        = Http::getGET();
 				$get["pos"] = $pos;
-				if (isset($row->_data))
-				{
-					$row = $parseRow($row);
-				}
+				$get["op"]  = "viewDbLog";
+				
 				if (isset($list[($pos - 1)]))
 				{
 					$lget        = $get;
 					$lget["pos"] -= 1;
-					echo '<a href="' . $this->Router->getLink("op/viewDbLog", $lget) . '">Prev</a> ';
+					echo '<a href="' . Route::getLink('./', $lget) . '">Prev</a> ';
 				}
 				if (isset($list[($pos + 1)]))
 				{
 					$lget        = $get;
 					$lget["pos"] += 1;
-					echo '<a href="' . $this->Router->getLink("op/viewDbLog", $lget) . '">Next</a> ';
+					echo '<a href="' . Route::getLink('./', $lget) . '">Next</a> ';
 				}
 				debug($row);
 			};
-			$collect  = [];
-			if (Http::existsGET("fieldContain"))
-			{
-				$newList = [];
-				foreach ($list as $key => $rowO)
-				{
-					$row       = $parseRow($rowO);
-					$fieldName = Http::getGET("fieldContain");
-					if (Http::existsGET("fieldValue"))
-					{
-						if (isset($row->data->fields->$fieldName))
-						{
-							if ($row->data->fields->$fieldName == Http::getGET("fieldValue"))
-							{
-								$collect[] = $row->tableRowID;
-								$newList[] = $row;
-							}
-						}
-					}
-					else
-					{
-						if (isset($row->data->fields->$fieldName))
-						{
-							$collect[] = $row->tableRowID;
-							$newList[] = $row;
-						}
-					}
-				}
-				$list = $newList;
-			}
-			debug("fieldContains", $collect);
-			if (Http::existsGET("whereContain"))
-			{
-				$newList = [];
-				foreach ($list as $key => $rowO)
-				{
-					$row       = $parseRow($rowO);
-					$fieldName = Http::getGET("whereContain");
-					if (Http::existsGET("whereValue"))
-					{
-						if (isset($row->data->where->$fieldName))
-						{
-							if ($row->data->where->$fieldName == Http::getGET("whereValue"))
-							{
-								$newList[] = $row;
-							}
-						}
-					}
-					else
-					{
-						if (isset($row->data->where->$fieldName))
-						{
-							$newList[] = $row;
-						}
-					}
-				}
-				$list = $newList;
-			}
+			
+			$pos = (Http::existsGET("pos")) ? Http::getGET("pos") : 0;
+			
 			if (Http::existsGET("debugAll"))
 			{
-				$arr = [];
-				foreach ($list as $row)
-				{
-					$row   = $parseRow($row);
-					$arr[] = $row;
-				}
-				debug($arr);
+				debug($list);
 				exit;
 			}
-			
-			if (isset($list[$pos]))
+			else
 			{
-				$getRow($pos, $list[$pos]);
+				if (isset($list[$pos]))
+				{
+					$show($pos, $list[$pos]);
+				}
 			}
 		}
 		exit;
+	}
+	
+	public function viewErrorLog()
+	{
+		if (Http::getGET("hash") == "a12g3fs14g3d5h36gk56hilasd3a")
+		{
+			$Db = Db::TErrorLog();
+			$Db->ID(Http::getGET("ID"));
+			$Db->orderBy("ID ASC");
+			echo $Db->select('content')->getValue('content');
+		}
 	}
 	
 	public function dumpRedis()

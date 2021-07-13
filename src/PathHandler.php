@@ -81,7 +81,7 @@ abstract class PathHandler
 			}
 			$dir = str_replace("/", DIRECTORY_SEPARATOR, $dir);
 			$len = strlen($dir) - 1;
-			if ($dir{$len} != DIRECTORY_SEPARATOR and !is_file($dir))
+			if ($dir[$len] != DIRECTORY_SEPARATOR and !is_file($dir))
 			{
 				$dir .= DIRECTORY_SEPARATOR;
 			}

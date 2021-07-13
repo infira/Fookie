@@ -114,11 +114,19 @@ class SmurfDb extends SmurfCommand
 			{
 				if (!in_array($file, $this->dbFiles[$to]))
 				{
-					$ex  = explode('.', $file);
-					$ext = strtolower(join('.', array_slice($ex, 1)));
-					if (in_array($ext, ['sql.php', 'sql', 'trigger.sql']))
+					$realExtension = pathinfo($file)['extension'];
+					if ($realExtension == 'sql')
 					{
 						$this->dbFiles[$to][] = $file;
+					}
+					else
+					{
+						$ex  = explode('.', $file);
+						$ext = strtolower(join('.', array_slice($ex, -2)));
+						if ($ext == 'sql.php')
+						{
+							$this->dbFiles[$to][] = $file;
+						}
 					}
 				}
 			}

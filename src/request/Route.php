@@ -59,12 +59,12 @@ class Route
 		$len = strlen($url);
 		if ($len > 0)
 		{
-			if ($url{$len - 1} == "/")
+			if ($url[$len - 1] == "/")
 			{
 				$url = substr($url, 0, -1);
 			}
 		}
-		if ($url && $url{0} == '/')
+		if ($url && $url[0] == '/')
 		{
 			$url = substr($url, 1);
 		}
@@ -539,7 +539,7 @@ class Route
 				$url .= '/' . $left;
 			}
 		}
-		elseif ($pathOrName{0} != '/')
+		elseif ($pathOrName[0] != '/')
 		{
 			$routeName = self::convert2RoleName($pathOrName);
 			
