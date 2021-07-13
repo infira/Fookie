@@ -1,8 +1,8 @@
 <?php
-$defaultSmurs['autoload']         = '\Infira\Fookie\Smurf\SmurfAutoloader';
-$defaultSmurs['db']               = '\Infira\Fookie\Smurf\SmurfDb';
-$defaultSmurs['Updates']          = '\Infira\Fookie\Smurf\Updates';
-$defaultSmurs['GenAssetsVersion'] = '\Infira\Fookie\Smurf\GenAssetsVersion';
-$defaultSmurs['CacheFlusher']     = '\Infira\Fookie\Smurf\CacheFlusher';
-$defaultSmurs['InputGenerator']   = '\Infira\Fookie\Smurf\InputGenerator';
+$smurfs['autoload']         = '\Infira\Fookie\Smurf\SmurfAutoloader';
+$smurfs['db']               = '\Infira\Fookie\Smurf\SmurfDb';
+$smurfs['Updates']          = '\Infira\Fookie\Smurf\Updates';
+$smurfs['GenAssetsVersion'] = '\Infira\Fookie\Smurf\GenAssetsVersion';
+$smurfs['CacheFlusher']     = '\Infira\Fookie\Smurf\CacheFlusher';
+$smurfs['InputGenerator']   = '\Infira\Fookie\Smurf\InputGenerator';
 ?>
