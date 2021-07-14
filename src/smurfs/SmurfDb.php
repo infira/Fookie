@@ -149,6 +149,7 @@ class SmurfDb extends SmurfCommand
 		{
 			$this->message('<info>generated model: </info>' . $file);
 		}
+		$this->afterExecute_Models();
 	}
 	
 	public function runViews()
@@ -223,7 +224,11 @@ class SmurfDb extends SmurfCommand
 	
 	protected function beforeExecute_Models() { }
 	
+	protected function afterExecute_Models() { }
+	
 	protected function beforeExecute_Views() { }
+	
+	protected function afterExecute_Views() { }
 }
 
 ?>
