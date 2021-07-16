@@ -7,8 +7,6 @@ use Infira\Fookie\Flush;
 
 class CacheFlusher extends SmurfCommand
 {
-	private $configs = [];
-	
 	public function __construct()
 	{
 		$this->addConfig('cache', 'c', 'flushCache');
@@ -20,7 +18,14 @@ class CacheFlusher extends SmurfCommand
 		Cache::init();
 		Flush::cache();
 		$this->info('Cachly flushed');
+		$this->afterFlush();
 	}
+	
+	public function afterFlush()
+	{
+	
+	}
+	
 }
 
 ?>

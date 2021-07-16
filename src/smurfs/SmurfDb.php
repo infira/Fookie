@@ -9,12 +9,14 @@ use Infira\Poesis\Connection;
 use File;
 use Db;
 use Infira\Utils\Dir;
+use Infira\Fookie\facade\Variable;
 
 
 class SmurfDb extends SmurfCommand
 {
 	private $dbFiles     = ['views' => [], 'triggers' => []];
 	private $voidDbFiles = ['views' => [], 'triggers' => []];
+	private $variable    = [];
 	
 	/**
 	 * @var Options
@@ -41,6 +43,11 @@ class SmurfDb extends SmurfCommand
 	public function setDbConnection(?Connection $dbConnection): void
 	{
 		$this->dbConnection = $dbConnection;
+	}
+	
+	public function addVariable(string $name, $value): void
+	{
+		$this->variable[$name] = $value;
 	}
 	
 	protected function setInstallPath(string $path)
@@ -180,11 +187,11 @@ class SmurfDb extends SmurfCommand
 						{
 							$this->error("View function $func must return string");
 						}
-						Db::complexQuery($q);
+						Db::complexQuery($this->parseQuery($q));
 					}
 					else
 					{
-						Db::fileQuery($fn);
+						Db::fileQuery($fn, $this->variable);
 					}
 				}
 				catch (\Exception $e)
@@ -209,7 +216,7 @@ class SmurfDb extends SmurfCommand
 				{
 					try
 					{
-						Db::realQuery($q);
+						Db::realQuery($this->parseQuery($q));
 					}
 					catch (\Exception $e)
 					{
@@ -220,6 +227,11 @@ class SmurfDb extends SmurfCommand
 				$this->message('<info>installed trigger: </info>' . $fn);
 			}
 		}
+	}
+	
+	private function parseQuery(string $query)
+	{
+		return Variable::assign($this->variable, $query);
 	}
 	
 	protected function beforeExecute_Models() { }
